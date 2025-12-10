@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename package &apos;com.Backend.modal&apos; to &apos;com.Backend.GoldenNest.modal&apos;&#x0D;&#x0A;- Original project: &apos;goldennest&apos;&#x0D;&#x0A;- Original element: &apos;goldennest/src/main/java/com.Backend.modal&apos;&#x0D;&#x0A;- Renamed element: &apos;goldennest/src/main/java/com.Backend.GoldenNest.modal&apos;&#x0D;&#x0A;- Update references to refactored element&#x0D;&#x0A;- Update textual occurrences in comments and strings" description="Rename package &apos;com.Backend.modal&apos;" flags="589830" hierarchical="false" id="org.eclipse.jdt.ui.rename.package" input="/src\/main\/java=/optional=/true=/=/maven.pomderived=/true=/&lt;com.Backend.modal" name="com.Backend.GoldenNest.modal" qualified="false" references="true" stamp="1762466210996" textual="false" version="1.0"/>
+</session>

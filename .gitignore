@@ -1,0 +1,18 @@
+# Ignore this metadata folder
+_metadata/
+
+# Frontend dependencies & build
+frontend/node_modules/
+frontend/dist/
+
+# Backend build
+goldennest/target/
+
+# IDE / editor stuff
+.vscode/
+.idea/
+*.iml
+
+# OS junk
+.DS_Store
+Thumbs.db

@@ -1,0 +1,87 @@
+-- Flyway Migration: Initial Schema for Real Estate Platform
+SET NAMES utf8mb4;
+SET time_zone = '+00:00';
+
+CREATE TABLE users (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  role VARCHAR(20) NOT NULL DEFAULT 'USER',
+  name VARCHAR(120),
+  phone VARCHAR(40),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE property (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  description TEXT,
+  price DECIMAL(12,2) NOT NULL,
+  bedrooms INT NOT NULL,
+  bathrooms INT NOT NULL,
+  type VARCHAR(20) NOT NULL DEFAULT 'HOUSE',
+  status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+  address1 VARCHAR(255),
+  city VARCHAR(120),
+  state VARCHAR(80),
+  zip VARCHAR(20),
+  lat DOUBLE,
+  lng DOUBLE,
+  area_sqft INT,
+  amenities_json JSON,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_property_city (city),
+  KEY idx_property_state (state),
+  KEY idx_property_price (price),
+  KEY idx_property_bedrooms (bedrooms),
+  KEY idx_property_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE property_image (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  property_id BIGINT NOT NULL,
+  url TEXT NOT NULL,
+  sort INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_property_image_property FOREIGN KEY (property_id) REFERENCES property(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE favorite (
+  user_id BIGINT NOT NULL,
+  property_id BIGINT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, property_id),
+  CONSTRAINT fk_favorite_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_favorite_property FOREIGN KEY (property_id) REFERENCES property(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE inquiry (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  property_id BIGINT NOT NULL,
+  user_id BIGINT NULL,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(40),
+  message TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_inquiry_property FOREIGN KEY (property_id) REFERENCES property(id) ON DELETE CASCADE,
+  CONSTRAINT fk_inquiry_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE visit_request (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  property_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  preferred_at DATETIME(3) NOT NULL,
+  scheduled_at DATETIME(3) NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+  note VARCHAR(500),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_visit_property FOREIGN KEY (property_id) REFERENCES property(id) ON DELETE CASCADE,
+  CONSTRAINT fk_visit_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,0 +1,17 @@
+ALTER TABLE property
+    ADD COLUMN IF NOT EXISTS property_type     VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS location_tag      VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS year_built        INT NULL,
+    ADD COLUMN IF NOT EXISTS tenure            VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS lease_start_date  VARCHAR(50) NULL,
+    ADD COLUMN IF NOT EXISTS lease_term_years  INT NULL,
+    ADD COLUMN IF NOT EXISTS lease_expiry_date VARCHAR(50) NULL,
+    ADD COLUMN IF NOT EXISTS floor_plans       TEXT NULL,
+    ADD COLUMN IF NOT EXISTS virtual_tours     TEXT NULL,
+    ADD COLUMN IF NOT EXISTS documents         TEXT NULL,
+    ADD COLUMN IF NOT EXISTS owner_id          BIGINT NULL;
+
+-- Optional but recommended: foreign key from property.owner_id → user.id
+ALTER TABLE property
+    ADD CONSTRAINT IF NOT EXISTS fk_property_owner
+        FOREIGN KEY (owner_id) REFERENCES user(id);

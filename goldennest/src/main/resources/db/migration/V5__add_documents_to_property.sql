@@ -1,0 +1,2 @@
+ALTER TABLE property
+ADD COLUMN documents TEXT NULL;

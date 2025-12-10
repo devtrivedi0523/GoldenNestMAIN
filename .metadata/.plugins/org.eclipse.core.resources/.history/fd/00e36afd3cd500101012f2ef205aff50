@@ -1,0 +1,15 @@
+-- V7__add_property_extra_fields.sql
+
+ALTER TABLE property
+    ADD COLUMN tenure             VARCHAR(100) NULL,
+    ADD COLUMN lease_start_date   DATE NULL,
+    ADD COLUMN lease_term_years   INT NULL,
+    ADD COLUMN lease_expiry_date  DATE NULL,
+    ADD COLUMN floor_plans        TEXT NULL,
+    ADD COLUMN virtual_tours      TEXT NULL,
+    ADD COLUMN documents          TEXT NULL,
+
+-- FK to user table – adjust table/column names if yours are different
+ALTER TABLE property
+    ADD CONSTRAINT fk_property_owner
+        FOREIGN KEY (owner_id) REFERENCES users(id);

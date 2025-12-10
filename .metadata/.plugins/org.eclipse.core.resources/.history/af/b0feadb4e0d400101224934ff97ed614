@@ -1,0 +1,264 @@
+package com.Backend.GoldenNest.modal;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "property")
+
+public class Property {
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	private String title;
+	
+	@Column(columnDefinition = "text")
+	private String description;
+	
+	private BigDecimal price;
+
+    private Integer bedrooms;
+    private Integer bathrooms;
+
+    private String type;      
+    private String status;    
+
+    private String address1;
+    private String city;
+    private String state;
+    private String zip;
+
+    private Double lat;
+    private Double lng;
+    private Integer areaSqft;
+    
+    private String propertyType;   // Apartment, Villa, etc.
+    private String locationTag;    // Downtown, Suburbs, Beachfront, Hillside
+    private Integer yearBuilt;     // int build year
+
+    private String tenure;          // e.g. "Freehold", "Leasehold"
+    private String leaseStartDate;  // store as ISO string "YYYY-MM-DD"
+    private Integer leaseTermYears; // original lease length
+    private String leaseExpiryDate;
+    
+ // Property.java
+    @ManyToOne
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
+    public User getOwner() { return owner; }
+    public void setOwner(User owner) { this.owner = owner; }
+
+    
+    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    private List<PropertyImage> images = new ArrayList<>();
+    
+    public Property() {}
+    	
+    	public Property(Long id, String title, String description, BigDecimal price, Integer bedrooms, Integer bathrooms,
+                String type, String status, String address1, String city, String state, String zip,
+                Double lat, Double lng, Integer areaSqft, List<PropertyImage> images) {
+    		
+    		this.id = id;
+            this.title = title;
+            this.description = description;
+            this.price = price;
+            this.bedrooms = bedrooms;
+            this.bathrooms = bathrooms;
+            this.type = type;
+            this.status = status;
+            this.address1 = address1;
+            this.city = city;
+            this.state = state;
+            this.zip = zip;
+            this.lat = lat;
+            this.lng = lng;
+            this.areaSqft = areaSqft;
+            this.images = images;	
+    	
+    }
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public BigDecimal getPrice() {
+		return price;
+	}
+
+	public void setPrice(BigDecimal price) {
+		this.price = price;
+	}
+
+	public Integer getBedrooms() {
+		return bedrooms;
+	}
+
+	public void setBedrooms(Integer bedrooms) {
+		this.bedrooms = bedrooms;
+	}
+
+	public Integer getBathrooms() {
+		return bathrooms;
+	}
+
+	public void setBathrooms(Integer bathrooms) {
+		this.bathrooms = bathrooms;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getAddress1() {
+		return address1;
+	}
+
+	public void setAddress1(String address1) {
+		this.address1 = address1;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getState() {
+		return state;
+	}
+
+	public void setState(String state) {
+		this.state = state;
+	}
+
+	public String getZip() {
+		return zip;
+	}
+
+	public void setZip(String zip) {
+		this.zip = zip;
+	}
+
+	public Double getLat() {
+		return lat;
+	}
+
+	public void setLat(Double lat) {
+		this.lat = lat;
+	}
+
+	public Double getLng() {
+		return lng;
+	}
+
+	public void setLng(Double lng) {
+		this.lng = lng;
+	}
+
+	public Integer getAreaSqft() {
+		return areaSqft;
+	}
+
+	public void setAreaSqft(Integer areaSqft) {
+		this.areaSqft = areaSqft;
+	}
+
+	public List<PropertyImage> getImages() {
+		return images;
+	}
+
+	public void setImages(List<PropertyImage> images) {
+		this.images = images;
+	}
+	
+	public String getPropertyType() { return propertyType; }
+	public void setPropertyType(String propertyType) { this.propertyType = propertyType; }
+
+	public String getLocationTag() { return locationTag; }
+	public void setLocationTag(String locationTag) { this.locationTag = locationTag; }
+
+	public Integer getYearBuilt() { return yearBuilt; }
+	public void setYearBuilt(Integer yearBuilt) { this.yearBuilt = yearBuilt; }
+
+    
+	@Override
+	public String toString() {
+        return "Property [id=" + id + ", title=" + title + ", price=" + price + ", city=" + city + ", state=" + state + "]";
+	
+}
+	public String getTenure() {
+		return tenure;
+	}
+	public void setTenure(String tenure) {
+		this.tenure = tenure;
+	}
+	public String getLeaseStartDate() {
+		return leaseStartDate;
+	}
+	public void setLeaseStartDate(String leaseStartDate) {
+		this.leaseStartDate = leaseStartDate;
+	}
+	public Integer getLeaseTermYears() {
+		return leaseTermYears;
+	}
+	public void setLeaseTermYears(Integer leaseTermYears) {
+		this.leaseTermYears = leaseTermYears;
+	}
+	public String getLeaseExpiryDate() {
+		return leaseExpiryDate;
+	}
+	public void setLeaseExpiryDate(String leaseExpiryDate) {
+		this.leaseExpiryDate = leaseExpiryDate;
+	}
+}
+

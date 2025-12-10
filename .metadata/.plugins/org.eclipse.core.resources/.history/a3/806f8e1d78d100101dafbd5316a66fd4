@@ -1,0 +1,417 @@
+package com.Backend.GoldenNest.controller;
+
+import com.Backend.GoldenNest.dto.PropertyCardDto;
+import com.Backend.GoldenNest.dto.PropertyCreateDto;
+import com.Backend.GoldenNest.dto.PropertyDetailDto;
+import com.Backend.GoldenNest.modal.Property;
+import com.Backend.GoldenNest.modal.PropertyImage;
+import com.Backend.GoldenNest.modal.User;
+import com.Backend.GoldenNest.repository.PropertyImageRepository;
+import com.Backend.GoldenNest.repository.PropertyRepository;
+import com.Backend.GoldenNest.repository.UserRepository;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+
+import java.net.URI;
+
+
+
+@RestController
+@RequestMapping("/api/properties")
+public class PropertyController {
+
+    private final PropertyRepository properties;
+    private final PropertyImageRepository images;
+
+    // 🔑 Google Maps key from application.properties
+    @Value("${google.maps.api.key:}")
+    private String googleMapsApiKey;
+
+    // simple HTTP client for geocoding calls
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    public PropertyController(PropertyRepository properties,
+                              PropertyImageRepository images) {
+        this.properties = properties;
+        this.images = images;
+    }
+
+    // ----------- LIST (cards with filters) -----------
+    @GetMapping
+    public Page<PropertyCardDto> list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Integer minBedrooms,
+
+            // size filter -> maps to areaSqft
+            @RequestParam(required = false) Integer minSize,
+            @RequestParam(required = false) Integer maxSize,
+
+            // property type filters
+            @RequestParam(required = false) String type,          // "Apartment", "Villa" (legacy)
+            @RequestParam(required = false) String propertyType,  // preferred name
+            @RequestParam(required = false) String locationTag,   // "Downtown", "Suburbs", etc.
+
+            @RequestParam(required = false) Integer yearBuilt,
+            @RequestParam(required = false) String q
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+
+        // base spec: only APPROVED properties are public
+        Specification<Property> spec = (root, query, cb) ->
+                cb.equal(root.get("status"), "APPROVED");
+
+        // ---- City / location ----
+        if (city != null && !city.isBlank()) {
+            String pattern = "%" + city.toLowerCase() + "%";
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("city")), pattern));
+        }
+
+        // match explicit locationTag column if frontend sends &locationTag=
+        if (locationTag != null && !locationTag.isBlank()) {
+            String lt = locationTag.toLowerCase();
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.lower(root.get("locationTag")), lt));
+        }
+
+        // ---- Property type ----
+        // Prefer propertyType param; fallback to type
+        String typeFilter = null;
+        if (propertyType != null && !propertyType.isBlank()) {
+            typeFilter = propertyType;
+        } else if (type != null && !type.isBlank()) {
+            typeFilter = type;
+        }
+
+        if (typeFilter != null) {
+            String tf = typeFilter.toLowerCase();
+            // You store both type and propertyType; we can match on either
+            spec = spec.and((root, query, cb) ->
+                    cb.or(
+                            cb.equal(cb.lower(root.get("type")), tf),
+                            cb.equal(cb.lower(root.get("propertyType")), tf)
+                    ));
+        }
+
+        // ---- Year built ----
+        if (yearBuilt != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("yearBuilt"), yearBuilt));
+        }
+
+        // ---- Price range ----
+        if (minPrice != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+        }
+
+        if (maxPrice != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+        }
+
+        // ---- Bedrooms ----
+        if (minBedrooms != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("bedrooms"), minBedrooms));
+        }
+
+        // ---- Size (areaSqft) ----
+        if (minSize != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("areaSqft"), minSize));
+        }
+
+        if (maxSize != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThanOrEqualTo(root.get("areaSqft"), maxSize));
+        }
+
+        // 🔍 free-text search: title / description / city / state
+        if (q != null && !q.isBlank()) {
+            String pattern = "%" + q.toLowerCase() + "%";
+            spec = spec.and((root, query, cb) ->
+                    cb.or(
+                            cb.like(cb.lower(root.get("title")), pattern),
+                            cb.like(cb.lower(root.get("description")), pattern),
+                            cb.like(cb.lower(root.get("city")), pattern),
+                            cb.like(cb.lower(root.get("state")), pattern)
+                    ));
+        }
+
+        Page<Property> pageData = properties.findAll(spec, pageable);
+
+        return pageData.map(p -> {
+            PropertyCardDto dto = new PropertyCardDto();
+            dto.id = p.getId();
+            dto.title = p.getTitle();
+            dto.city = p.getCity();
+            dto.state = p.getState();
+            dto.price = p.getPrice();
+            dto.coverImageUrl = p.getImages().isEmpty() ? null : p.getImages().get(0).getUrl();
+            dto.bedrooms = p.getBedrooms();
+            dto.bathrooms = p.getBathrooms();
+            dto.type = p.getType(); // still exposed as 'type' to frontend
+            dto.description = p.getDescription();
+
+            if (p.getOwner() != null) {
+                dto.ownerId = p.getOwner().getId();
+                dto.ownerEmail = p.getOwner().getEmail();
+                dto.ownerName = p.getOwner().getName() != null && !p.getOwner().getName().isBlank()
+                        ? p.getOwner().getName()
+                        : p.getOwner().getEmail();
+            }
+
+            return dto;
+        });
+    }
+
+    // ----------- DETAILS -----------
+    @GetMapping("/{id}")
+    public PropertyDetailDto get(@PathVariable Long id) {
+        Property p = properties.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
+
+        PropertyDetailDto dto = new PropertyDetailDto();
+        dto.id = p.getId();
+        dto.title = p.getTitle();
+        dto.description = p.getDescription();
+        dto.city = p.getCity();
+        dto.state = p.getState();
+        dto.price = p.getPrice();
+        dto.bedrooms = p.getBedrooms();
+        dto.bathrooms = p.getBathrooms();
+        dto.areaSqft = p.getAreaSqft();
+        dto.images = p.getImages().stream().map(PropertyImage::getUrl).collect(Collectors.toList());
+
+        // expose coordinates to frontend
+        dto.lat = p.getLat();
+        dto.lng = p.getLng();
+        return dto;
+    }
+
+    // ----------- CREATE -----------
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> create(@Valid @RequestBody PropertyCreateDto dto) {
+
+        if (dto == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+
+        User current = getCurrentUser(); // 🔸 who is creating
+
+        Property p = new Property();
+        p.setTitle(dto.getTitle());
+        p.setDescription(dto.getDescription());
+        p.setPrice(dto.getPrice());
+        p.setBedrooms(dto.getBedrooms());
+        p.setBathrooms(dto.getBathrooms());
+        p.setAddress1(dto.getAddress1());
+        p.setCity(dto.getCity());
+        p.setState(dto.getState());
+        p.setZip(dto.getZip());
+        p.setAreaSqft(dto.getAreaSqft());
+
+        // If frontend sends lat/lng, we respect them; otherwise we'll geocode below
+        p.setLat(dto.getLat());
+        p.setLng(dto.getLng());
+
+        // new fields coming from frontend / DTO
+        p.setPropertyType(dto.getPropertyType());
+        p.setLocationTag(dto.getLocationTag());
+        p.setYearBuilt(dto.getYearBuilt());
+
+        // ✅ ensure 'type' is also populated so filters on &type= work
+        String typeValue = dto.getType();
+        if (typeValue == null || typeValue.isBlank()) {
+            typeValue = dto.getPropertyType(); // fall back to propertyType
+        }
+        p.setType(typeValue);
+
+        // ✅ required NOT NULL columns
+        p.setStatus("PENDING");
+        p.setOwner(current);
+
+        // ⭐️ if lat/lng are missing, try to auto-geocode from address
+        autoGeocodeIfMissing(p);
+
+        Property saved = properties.save(p);
+
+        if (dto.getImages() != null) {
+            int sort = 0;
+            for (String url : dto.getImages()) {
+                if (url == null || url.isBlank()) continue;
+                PropertyImage img = new PropertyImage();
+                img.setProperty(saved);
+                img.setUrl(url);
+                img.setSort(sort++);
+                images.save(img);
+            }
+        }
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("id", saved.getId());
+        body.put("status", "ok");
+        return ResponseEntity.ok(body);
+    }
+
+    @Autowired
+    private UserRepository users;
+
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() ||
+                "anonymousUser".equals(auth.getPrincipal())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not logged in");
+        }
+
+        String email = auth.getName(); // assuming username = email in JWT
+        return users.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+    }
+
+    // ----------- MY PROPERTIES -----------
+    @GetMapping("/mine")
+    public Page<PropertyCardDto> myProperties(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        User current = getCurrentUser();
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+
+        Page<Property> pageData = properties.findByOwnerId(current.getId(), pageable);
+
+        return pageData.map(p -> {
+            PropertyCardDto dto = new PropertyCardDto();
+            dto.id = p.getId();
+            dto.title = p.getTitle();
+            dto.city = p.getCity();
+            dto.state = p.getState();
+            dto.price = p.getPrice();
+            dto.coverImageUrl = p.getImages().isEmpty() ? null : p.getImages().get(0).getUrl();
+            dto.bedrooms = p.getBedrooms();
+            dto.bathrooms = p.getBathrooms();
+            dto.type = p.getType();
+            dto.description = p.getDescription();
+            dto.status = p.getStatus(); // add this field to PropertyCardDto if not there
+
+            User owner = p.getOwner();
+            if (owner != null) {
+                dto.ownerId = owner.getId();
+                dto.ownerEmail = owner.getEmail();
+                dto.ownerName = (owner.getName() != null && !owner.getName().isBlank())
+                        ? owner.getName()
+                        : owner.getEmail(); // fallback
+            }
+
+            return dto;
+        });
+    }
+
+    // ----------- GEO-CODING HELPER -----------
+
+    /**
+     * If property.lat / property.lng are null, use Google Geocoding API
+     * to fetch coordinates from the address fields.
+     */
+ // Try to fill lat/lng from Google Maps Geocoding if missing
+    private void autoGeocodeIfMissing(Property p) {
+    	final HttpClient httpClient = HttpClient.newHttpClient();
+
+        // already have coords → nothing to do
+        if (p.getLat() != null && p.getLng() != null) return;
+
+        // no backend key configured → skip
+        if (googleMapsApiKey == null || googleMapsApiKey.isBlank()) {
+            System.out.println("⚠️ No google.maps.api.key configured; skipping geocode.");
+            return;
+        }
+
+        // build address string
+        StringBuilder sb = new StringBuilder();
+        if (p.getAddress1() != null && !p.getAddress1().isBlank()) sb.append(p.getAddress1()).append(", ");
+        if (p.getCity() != null && !p.getCity().isBlank()) sb.append(p.getCity()).append(", ");
+        if (p.getState() != null && !p.getState().isBlank()) sb.append(p.getState()).append(", ");
+        if (p.getZip() != null && !p.getZip().isBlank()) sb.append(p.getZip());
+
+        String address = sb.toString().replaceAll(", $", "").trim();
+        if (address.isEmpty()) {
+            // nothing to geocode
+            return;
+        }
+
+        try {
+            String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8);
+            String url = "https://maps.googleapis.com/maps/api/geocode/json?address="
+                    + encodedAddress + "&key=" + googleMapsApiKey;
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response =
+                    httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                System.out.println("❌ Geocode HTTP failed: " + response.statusCode());
+                return;
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode json = mapper.readTree(response.body());
+
+            String status = json.path("status").asText();
+            if (!"OK".equals(status)) {
+                System.out.println("❌ Geocode status not OK: " + status);
+                return;
+            }
+
+            JsonNode location = json.path("results").path(0)
+                    .path("geometry").path("location");
+            double lat = location.path("lat").asDouble();
+            double lng = location.path("lng").asDouble();
+
+            p.setLat(lat);
+            p.setLng(lng);
+
+            System.out.println("✅ Geocoded '" + address + "' → "
+                    + lat + ", " + lng);
+
+        } catch (Exception e) {
+            System.out.println("❌ Failed to geocode '" + address + "': " + e.getMessage());
+        }
+    }
+
+}

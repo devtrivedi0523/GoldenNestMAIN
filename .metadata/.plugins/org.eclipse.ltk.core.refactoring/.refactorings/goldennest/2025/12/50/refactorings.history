@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;goldennest/src/main/resources/db/migration/V5__add_floor_plans_to_property.sql&apos; to &apos;V6__add_floor_plans_to_property.sql&apos;" description="Rename resource &apos;V5__add_floor_plans_to_property.sql&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/main/resources/db/migration/V5__add_floor_plans_to_property.sql" name="V6__add_floor_plans_to_property.sql" stamp="1765310634051" updateReferences="true"/>
+</session>
