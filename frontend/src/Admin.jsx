@@ -8,7 +8,7 @@ import {
     FaHome,
 } from "react-icons/fa";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://goldennestmain-production.up.railway.app";
+const API_BASE = import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
 
 /* ---------- tiny UI helpers ---------- */
 

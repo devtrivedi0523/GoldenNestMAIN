@@ -9,7 +9,7 @@ import {
     FaChevronRight,
 } from "react-icons/fa";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://goldennestmain-production.up.railway.app";
+const API_BASE = import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY; // Google Maps key
 
 // Helper to format price with commas

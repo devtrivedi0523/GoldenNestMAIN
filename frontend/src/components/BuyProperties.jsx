@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaBed, FaBath, FaHome, FaBuilding, FaTree } from "react-icons/fa";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://goldennestmain-production.up.railway.app";
+const API_BASE = import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
 
 // Format sale price with commas, e.g. £1,200,000
 const formatPrice = (value, currency = "£") => {

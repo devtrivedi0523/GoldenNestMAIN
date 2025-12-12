@@ -8,7 +8,7 @@ import {
     getAccessToken,
 } from "./auth";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://goldennestmain-production.up.railway.app";
+const API_BASE = import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
 
 const Sell = () => {
     const [authed, setAuthed] = useState(isLoggedIn());

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { getAccessToken } from "../auth";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://goldennestmain-production.up.railway.app";
+const API_BASE = import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
 
 export default function AdvancedProperty() {
     const { id } = useParams();                    // <-- /sell/upload/:id/advanced
