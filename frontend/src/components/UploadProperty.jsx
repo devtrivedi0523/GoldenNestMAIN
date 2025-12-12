@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getAccessToken } from "../auth";
 import AdvancedProperty from "./AdvancedProperty";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_URL || "https://goldennestmain-production.up.railway.app";
 
 const UploadProperty = () => {
   const navigate = useNavigate();

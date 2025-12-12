@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getAccessToken } from "./auth";
 import { FaBed, FaBath, FaHome } from "react-icons/fa";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_URL || "https://goldennestmain-production.up.railway.app";
 
 // Status label colors
 const statusColor = (s) => {

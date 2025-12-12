@@ -28,7 +28,7 @@ export function isLoggedIn(): boolean {
   return !!getAccessToken();
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_URL || "https://goldennestmain-production.up.railway.app";
 
 /* ----------------------------------------
    ✔ Strongly typed current user object
