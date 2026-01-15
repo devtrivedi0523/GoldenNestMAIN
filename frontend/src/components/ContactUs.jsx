@@ -16,16 +16,16 @@ const ContactUs = () => {
                     <div className='justify-center'>
                         <h4 className="font-semibold text-black mb-3">SELL A HOME</h4>
                         <ul className="space-y-2">
-                            <li><a href="#" className="hover:underline">Request an offer</a></li>
-                            <li><a href="#" className="hover:underline">Pricing</a></li>
-                            <li><a href="#" className="hover:underline">Reviews</a></li>
-                            <li><a href="#" className="hover:underline">Stories</a></li>
+                            <li><a href="/sell" className="hover:underline">Request an offer</a></li>
+                            
+                            <li><a href="/sell" className="hover:underline">Reviews</a></li>
+                            
                         </ul>
 
                         <h4 className="font-semibold text-black mt-5 mb-3">BUY A HOME</h4>
                         <ul className="space-y-2">
-                            <li><a href="#" className="hover:underline">Buy</a></li>
-                            <li><a href="#" className="hover:underline">Finance</a></li>
+                            <li><a href="/buy" className="hover:underline">Buy</a></li>
+                            
                         </ul>
                     </div>
 
@@ -37,7 +37,7 @@ const ContactUs = () => {
                     <div>
                         <h4 className="font-semibold text-black mb-3">RENT A HOME</h4>
                         <ul className="space-y-2">
-                            <li><a href="#" className="hover:underline">Rent home</a></li>
+                            <li><a href="/rent" className="hover:underline">Rent home</a></li>
                         </ul>
 
                         <h4 className="font-semibold text-black mt-5 mb-3">TERMS & PRIVACY</h4>
@@ -52,7 +52,7 @@ const ContactUs = () => {
                     <div>
                         <h4 className="font-semibold text-black mb-3">ABOUT</h4>
                         <ul className="space-y-2">
-                            <li><a href="#" className="hover:underline">About Us</a></li>
+                            <li><a href="/aboutus" className="hover:underline">About Us</a></li>
                             <li><a href="#" className="hover:underline">Contact</a></li>
                         </ul>
                     </div>

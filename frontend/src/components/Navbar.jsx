@@ -9,7 +9,9 @@ const Navbar = () => {
         <nav className="w-full bg-white shadow-md px-6 py-3">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
                 {/* Left: Logo */}
-                <img src="/1-2 1.png" alt="" />
+                <a href="/">
+                    <img src="/1-2 1.png" alt="" />
+                </a>
 
                 {/* Center: Navigation Tabs */}
                 <div className="hidden md:flex space-x-3 space-y-3 text-gray-600 font-medium">

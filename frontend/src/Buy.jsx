@@ -85,7 +85,7 @@ const Buy = () => {
             <div className=" bg-gray-50 px-4 py-10 flex flex-col items-center">
                 {/* Heading Section */}
                 <div className="max-w-full mb-10 px-20">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                    <h1 className="text-3xl md:text-4xl font-bold font-serif text-gray-900 mb-4">
                         Buy Your Dream Property
                     </h1>
                     <p className="text-gray-700">
