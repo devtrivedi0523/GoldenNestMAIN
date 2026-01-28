@@ -31,19 +31,19 @@ const AccountMenu = () => {
         <div className="relative">
             <button
                 onClick={() => setOpen((o) => !o)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white shadow-sm hover:bg-gray-50"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full border bg-white shadow-sm hover:bg-gray-50"
             >
                 <span className="h-7 w-7 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-xs font-semibold text-black">
                     {displayName.charAt(0).toUpperCase()}
                 </span>
 
                 <div className="flex flex-col leading-tight">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                    {/* <span className="text-[10px] uppercase tracking-wide text-gray-500">
                         Account
-                    </span>
-                    <span className="text-xs font-medium">
+                    </span> */}
+                    {/* <span className="text-xs font-medium">
                         {displayName}
-                    </span>
+                    </span> */}
                 </div>
 
                 <svg

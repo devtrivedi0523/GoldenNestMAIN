@@ -211,7 +211,7 @@ const ListingCard = ({
                 <div className="mt-3 flex gap-2">
                     {primaryLabel && (
                         <button
-                            className="px-3 py-1 rounded-md text-xs border hover:bg-red-200"
+                            className="px-3 py-1 rounded-md text-xs border hover:bg-green-200"
                             onClick={onPrimary}
                         >
                             {primaryLabel}
@@ -219,7 +219,7 @@ const ListingCard = ({
                     )}
                     {secondaryLabel && (
                         <button
-                            className="px-3 py-1 rounded-md text-xs border hover:bg-green-200"
+                            className="px-3 py-1 rounded-md text-xs border hover:bg-red-200"
                             onClick={onSecondary}
                         >
                             {secondaryLabel}

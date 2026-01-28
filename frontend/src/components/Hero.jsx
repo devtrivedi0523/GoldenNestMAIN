@@ -26,7 +26,7 @@ const Hero = () => {
         </h2>
 
         {/* Tabs */}
-        <div className="flex space-x-6 border-b border-gray-300 mb-4">
+        <div className="flex space-x-6 border-b border-gray-300 mb-4 font-serif">
           {tabs.map((tab) => (
             <button
               key={tab}

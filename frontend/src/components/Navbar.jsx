@@ -37,19 +37,10 @@ const Navbar = () => {
                         className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> About Us
                     </Link>
 
-                    <div className="flex items-center gap-4">
-                        {/* if not logged in, show your existing Login/Register buttons */}
-                        {!isLoggedIn() && (
-                            <>
-                                {/* existing login / signup buttons here */}
-                            </>
-                        )}
-
-                        {/* if logged in, show the account menu */}
-                        {isLoggedIn() && <AccountMenu />}
-                    </div>
+                    
 
                 </div>
+                
 
                 {/* Right: Contact Us Button */}
                 <div className="flex items-center space-x-4 justify-end">
@@ -67,6 +58,18 @@ const Navbar = () => {
                     >
                         <FaUserShield />
                     </Link> */}
+
+                    <div className="flex items-center justify-end gap-4">
+                        {/* if not logged in, show your existing Login/Register buttons */}
+                        {!isLoggedIn() && (
+                            <>
+                                {/* existing login / signup buttons here */}
+                            </>
+                        )}
+
+                        {/* if logged in, show the account menu */}
+                        {isLoggedIn() && <AccountMenu />}
+                    </div>
                 </div>
             </div>
         </nav>

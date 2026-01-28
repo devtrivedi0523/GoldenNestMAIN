@@ -112,13 +112,16 @@ const FeaturedProperties = () => {
                     <p className="text-xs text-gray-500 mt-0.5">{location}</p>
                   )}
                   {blurb && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      {blurb.length > 110 ? `${blurb.slice(0, 110)}…` : blurb}{" "}
-                      <span className="text-black font-medium cursor-pointer">
+                    <>
+                      <p className="text-sm text-gray-600 mt-2 line-clamp-1">
+                        {blurb}
+                      </p>
+                      <span className="text-black font-medium cursor-pointer text-sm">
                         Read More
                       </span>
-                    </p>
+                    </>
                   )}
+
 
                   {/* Tags from metrics */}
                   {tags.length > 0 && (

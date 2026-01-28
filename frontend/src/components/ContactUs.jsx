@@ -17,15 +17,15 @@ const ContactUs = () => {
                         <h4 className="font-semibold text-black mb-3">SELL A HOME</h4>
                         <ul className="space-y-2">
                             <li><a href="/sell" className="hover:underline">Request an offer</a></li>
-                            
+
                             <li><a href="/sell" className="hover:underline">Reviews</a></li>
-                            
+
                         </ul>
 
                         <h4 className="font-semibold text-black mt-5 mb-3">BUY A HOME</h4>
                         <ul className="space-y-2">
                             <li><a href="/buy" className="hover:underline">Buy</a></li>
-                            
+
                         </ul>
                     </div>
 
@@ -43,7 +43,12 @@ const ContactUs = () => {
                         <h4 className="font-semibold text-black mt-5 mb-3">TERMS & PRIVACY</h4>
                         <ul className="space-y-2">
                             <li><a href="#" className="hover:underline">Trust & Safety</a></li>
-                            <li><a href="#" className="hover:underline">Terms of Service</a></li>
+                            <li><a
+                                href="/Website legal pages.docx"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                            >Terms & Services</a></li>
                             <li><a href="#" className="hover:underline">Privacy Policy</a></li>
                         </ul>
                     </div>
@@ -53,7 +58,7 @@ const ContactUs = () => {
                         <h4 className="font-semibold text-black mb-3">ABOUT</h4>
                         <ul className="space-y-2">
                             <li><a href="/aboutus" className="hover:underline">About Us</a></li>
-                            <li><a href="#" className="hover:underline">Contact</a></li>
+                            <li><a href="/contact" className="hover:underline">Contact</a></li>
                         </ul>
                     </div>
                 </div>
