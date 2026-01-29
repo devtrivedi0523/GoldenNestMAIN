@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+// src/pages/rent.jsx
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FiMapPin,
   FiHome,
@@ -6,81 +8,161 @@ import {
   FiBox,
   FiCalendar,
   FiSearch,
-} from 'react-icons/fi';
+} from "react-icons/fi";
 
-import ContactUs from './components/ContactUs';
-import Footer from './components/Footer';
-import RentProperties from './components/RentProperties';
+import RentProperties from "./components/RentProperties";
+import ContactUs from "./components/ContactUs";
+import Footer from "./components/Footer";
 
 // helper to map dropdown value -> min/max price
 const mapPriceRange = (value) => {
   switch (value) {
-    case '100-250':
+    case "100-250":
       return { minPrice: 100000, maxPrice: 250000 };
-    case '250-500':
+    case "250-500":
       return { minPrice: 250000, maxPrice: 500000 };
-    case '500-1000':
+    case "500-1000":
       return { minPrice: 500000, maxPrice: 1000000 };
-    case '1000+':
-      return { minPrice: 1000000, maxPrice: '' }; // no upper bound
+    case "1000+":
+      return { minPrice: 1000000, maxPrice: "" };
     default:
-      return { minPrice: '', maxPrice: '' };
+      return { minPrice: "", maxPrice: "" };
   }
 };
 
 // helper to map dropdown value -> min/max size (areaSqft)
 const mapSizeRange = (value) => {
   switch (value) {
-    case 'under-1000':
+    case "under-1000":
       return { minSize: 0, maxSize: 1000 };
-    case '1000-2000':
+    case "1000-2000":
       return { minSize: 1000, maxSize: 2000 };
-    case '2000-3000':
+    case "2000-3000":
       return { minSize: 2000, maxSize: 3000 };
-    case '3000+':
-      return { minSize: 3000, maxSize: '' };
+    case "3000+":
+      return { minSize: 3000, maxSize: "" };
     default:
-      return { minSize: '', maxSize: '' };
+      return { minSize: "", maxSize: "" };
   }
 };
 
 const Rent = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // UI state for filters
-  const [searchText, setSearchText] = useState('');
-  const [location, setLocation] = useState('');
-  const [priceRange, setPriceRange] = useState('');
-  const [propertyType, setPropertyType] = useState('');
-  const [size, setSize] = useState('');
-  const [buildYear, setBuildYear] = useState('');
+  const [searchText, setSearchText] = useState("");
+  const [location, setLocation] = useState("");
+  const [priceRange, setPriceRange] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [size, setSize] = useState("");
+  const [buildYear, setBuildYear] = useState("");
 
   // Filters actually applied to the API
   const [appliedFilters, setAppliedFilters] = useState({
-    city: '',
-    minPrice: '',
-    maxPrice: '',
-    q: '',
-    type: '',
-    yearBuilt: '',
-    minSize: '',
-    maxSize: '',
+    city: "",
+    minPrice: "",
+    maxPrice: "",
+    q: "",
+    type: "",
+    yearBuilt: "",
+    minSize: "",
+    maxSize: "",
   });
 
+  // sync UI controls from URL params (runs on mount and when searchParams change)
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    const city = searchParams.get("city") || "";
+    const minPrice = searchParams.get("minPrice") || "";
+    const maxPrice = searchParams.get("maxPrice") || "";
+    const type = searchParams.get("type") || "";
+    const yearBuilt = searchParams.get("yearBuilt") || "";
+    const minSize = searchParams.get("minSize") || "";
+    const maxSize = searchParams.get("maxSize") || "";
+
+    // set form values from params
+    setSearchText(q);
+    setLocation(city);
+
+    // try to map numeric ranges back to dropdown selection (best-effort)
+    if (minPrice || maxPrice) {
+      if (minPrice && +minPrice >= 1000000) setPriceRange("1000+");
+      else if (minPrice && +minPrice >= 500000) setPriceRange("500-1000");
+      else if (minPrice && +minPrice >= 250000) setPriceRange("250-500");
+      else if (minPrice && +minPrice >= 100000) setPriceRange("100-250");
+      else setPriceRange("");
+    } else {
+      setPriceRange("");
+    }
+
+    if (minSize || maxSize) {
+      if (minSize && +minSize >= 3000) setSize("3000+");
+      else if (minSize && +minSize >= 2000) setSize("2000-3000");
+      else if (minSize && +minSize >= 1000) setSize("1000-2000");
+      else if (minSize && +minSize >= 0) setSize("under-1000");
+      else setSize("");
+    } else {
+      setSize("");
+    }
+
+    setPropertyType(type || "");
+    setBuildYear(yearBuilt || "");
+
+    // set canonical appliedFilters object
+    setAppliedFilters({
+      city,
+      minPrice,
+      maxPrice,
+      q,
+      type,
+      yearBuilt,
+      minSize,
+      maxSize,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
+
+  // When user submits the form, update URL params & appliedFilters
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const { minPrice, maxPrice } = mapPriceRange(priceRange);
     const { minSize, maxSize } = mapSizeRange(size);
 
+    const q = (searchText || "").trim();
+    const city = (location || "").trim();
+    const type = (propertyType || "").trim();
+    const yearBuilt = (buildYear || "").trim();
+
+    const params = {};
+    if (q) params.q = q;
+    if (city) params.city = city;
+    if (minPrice !== "") params.minPrice = String(minPrice);
+    if (maxPrice !== "") params.maxPrice = String(maxPrice);
+    if (type) params.type = type;
+    if (yearBuilt) params.yearBuilt = yearBuilt;
+    if (minSize !== "") params.minSize = String(minSize);
+    if (maxSize !== "") params.maxSize = String(maxSize);
+
+    // update the URL
+    setSearchParams(params);
+
+    // update local appliedFilters immediately (useEffect will sync too)
     setAppliedFilters({
-      city: location || '',
-      minPrice: minPrice || '',
-      maxPrice: maxPrice || '',
-      q: searchText.trim() || '',
-      type: propertyType || '',
-      yearBuilt: buildYear || '',
-      minSize: minSize || '',
-      maxSize: maxSize || '',
+      city: params.city || "",
+      minPrice: params.minPrice || "",
+      maxPrice: params.maxPrice || "",
+      q: params.q || "",
+      type: params.type || "",
+      yearBuilt: params.yearBuilt || "",
+      minSize: params.minSize || "",
+      maxSize: params.maxSize || "",
     });
+
+    // ensure route is /rent with the same params
+    const queryString = new URLSearchParams(params).toString();
+    navigate(`/rent${queryString ? `?${queryString}` : ""}`);
   };
 
   return (
@@ -94,8 +176,7 @@ const Rent = () => {
           <p className="text-gray-700">
             Welcome to Golden Nest, where your dream property awaits in every corner of our
             beautiful world. Explore our curated selection of properties, each offering a unique
-            story and a chance to redefine your life. With categories to suit every dreamer, your
-            journey
+            story and a chance to redefine your life.
           </p>
         </div>
 

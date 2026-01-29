@@ -44,8 +44,8 @@ const ContactUs = () => {
                         <ul className="space-y-2">
                             <li><a href="#" className="hover:underline">Trust & Safety</a></li>
                             <li><a
-                                href="/Website legal pages.docx"
-                                target="_blank"
+                                href="/terms"
+                                
                                 rel="noopener noreferrer"
                                 className="hover:underline"
                             >Terms & Services</a></li>
