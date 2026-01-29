@@ -239,7 +239,7 @@ export default function Hero({ initialLocation = "" }) {
                         <li
                           key={s.id || s.description || s}
                           className="p-2 cursor-pointer hover:bg-gray-100 text-sm"
-                          onClick={() => handleSuggestionClick(s.description || s)}
+                          onMouseDown={() => handleSuggestionClick(s.description || s)}
                         >
                           {s.description || s}
                         </li>
