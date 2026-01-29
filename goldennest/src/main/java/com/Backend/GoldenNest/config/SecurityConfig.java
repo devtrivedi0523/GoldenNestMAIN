@@ -32,17 +32,36 @@ public class SecurityConfig {
             .cors(c -> c.configurationSource(corsSource()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // public stuff
-            		.requestMatchers("/api/auth/login", "/api/auth/register", "/v3/api-docs/**", "/swagger-ui/**", "/error")
-            	    .permitAll()
-            	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-            	.requestMatchers(HttpMethod.GET, "/api/properties/**").permitAll()
-            	.requestMatchers(HttpMethod.POST, "/api/properties").authenticated()
-            	.requestMatchers("/api/admin/**").permitAll()
-            	.requestMatchers("/api/properties/mine").authenticated()
-            	// everything else needs auth
-            	.anyRequest().authenticated()
-            )
+
+            	    // ----------------------------
+            	    // ALWAYS allow preflight
+            	    // ----------------------------
+            	    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+            	    // ----------------------------
+            	    // PUBLIC endpoints (MUST be first)
+            	    // ----------------------------
+            	    .requestMatchers(HttpMethod.GET, "/api/places/**").permitAll()
+            	    .requestMatchers(HttpMethod.GET, "/api/properties/**").permitAll()
+
+            	    .requestMatchers("/api/auth/**").permitAll()
+            	    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/error").permitAll()
+
+            	    // ----------------------------
+            	    // PROTECTED endpoints
+            	    // ----------------------------
+            	    .requestMatchers(HttpMethod.POST, "/api/properties").authenticated()
+            	    .requestMatchers("/api/properties/mine").authenticated()
+
+            	    // ⚠️ WARNING: admin should NOT be public in prod
+            	    .requestMatchers("/api/admin/**").permitAll()
+
+            	    // ----------------------------
+            	    // Everything else
+            	    // ----------------------------
+            	    .anyRequest().authenticated()
+            	)
+
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
