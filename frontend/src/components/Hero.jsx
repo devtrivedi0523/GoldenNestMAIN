@@ -70,29 +70,37 @@ export default function Hero({ initialLocation = "" }) {
 
   // Optional: fetch place suggestions from backend proxy /api/places?input=
   useEffect(() => {
-    if (!debouncedQuery) {
-      setSuggestions([]);
-      setLoadingSuggestions(false);
-      return;
-    }
+  if (!debouncedQuery) {
+    setSuggestions([]);
+    setLoadingSuggestions(false);
+    return;
+  }
 
-    // If you don't have /api/places, this will just skip suggestions.
-    setLoadingSuggestions(true);
-    fetch(`${API_BASE}/api/places?input=${encodeURIComponent(debouncedQuery)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("No suggestions endpoint");
-        return res.json();
-      })
-      .then((data) => {
-        // expected shape: { predictions: [ { id, description, place_type } ] }
-        setSuggestions(data.predictions || []);
-      })
-      .catch(() => {
-        // fail silently — suggestions are optional
-        setSuggestions([]);
-      })
-      .finally(() => setLoadingSuggestions(false));
-  }, [debouncedQuery]);
+  setLoadingSuggestions(true);
+
+  const url = `${API_BASE}/api/places?input=${encodeURIComponent(debouncedQuery)}`;
+  console.log("🔎 places url:", url);
+
+  fetch(url)
+    .then(async (res) => {
+      const text = await res.text();
+      console.log("✅ places status:", res.status, "body:", text);
+
+      if (!res.ok) throw new Error(`places ${res.status}: ${text}`);
+
+      return JSON.parse(text);
+    })
+    .then((data) => {
+      console.log("✅ places parsed:", data);
+      setSuggestions(data.predictions || []);
+    })
+    .catch((err) => {
+      console.error("❌ places error:", err);
+      setSuggestions([]);
+    })
+    .finally(() => setLoadingSuggestions(false));
+}, [debouncedQuery]);
+
 
   // Fetch preview results whenever user pauses typing or when activeTab changes
   useEffect(() => {
