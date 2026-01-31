@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  font-family: "Josefin Sans", sans-serif;
 }
 
 .logo {
@@ -40,3 +41,20 @@
 .read-the-docs {
   color: #888;
 }
+
+
+/* .josefin-sans-font {
+  font-family: "Josefin Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 100;
+  font-style: normal;
+} */
+
+/* Global font */
+body {
+  font-family: "Josefin Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+

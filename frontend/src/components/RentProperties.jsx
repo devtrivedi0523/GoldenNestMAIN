@@ -78,7 +78,7 @@ const RentProperties = ({ filters = {} }) => {
     <section className="py-16 bg-white px-6 md:px-20">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-3xl md:text-4xl font-serif font-semibold">
+          <h2 className="text-3xl md:text-4xl font-semibold">
             Discover Your Perfect Rental Home
           </h2>
           <p className="text-gray-600 mt-2 max-w-xl">

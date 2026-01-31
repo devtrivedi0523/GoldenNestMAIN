@@ -101,7 +101,7 @@ const Sell = () => {
                 <div className="bg-[#f7f6f3] backdrop-blur-md">
                     <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div>
-                            <h1 className="text-xl md:text-2xl font-serif font-semibold">
+                            <h1 className="text-xl md:text-2xl font-semibold">
                                 List a Property on Golden Nest
                             </h1>
                             <p className="text-sm text-gray-600 mt-1 max-w-2xl">
@@ -136,7 +136,7 @@ const Sell = () => {
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                         List in just a few minutes
                     </div>
-                    <h1 className="text-3xl font-serif font-semibold text-gray-900 mb-3">
+                    <h1 className="text-3xl font-semibold text-gray-900 mb-3">
                         Start listing properties with Golden Nest
                     </h1>
                     <p className="text-sm text-gray-700 leading-relaxed mb-4">

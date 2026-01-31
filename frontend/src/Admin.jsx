@@ -480,7 +480,7 @@ export default function AdminDashboard() {
                     {/* header */}
                     <div className="flex items-start justify-between">
                         <div>
-                            <h1 className="text-3xl md:text-4xl font-serif font-bold">
+                            <h1 className="text-3xl md:text-4xl font-bold">
                                 Hello, Admin
                             </h1>
                             <p className="mt-2 text-gray-700">
@@ -513,7 +513,7 @@ export default function AdminDashboard() {
                     {/* tabs + lists */}
                     <div className="mt-10">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-2xl md:text-3xl font-serif font-bold">
+                            <h2 className="text-2xl md:text-3xl font-bold">
                                 Manage Listings
                             </h2>
                             <Tabs active={tab} counts={counts} onChange={setTab} />

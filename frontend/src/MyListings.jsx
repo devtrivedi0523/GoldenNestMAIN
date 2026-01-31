@@ -111,7 +111,7 @@ const MyListings = () => {
         <section className="min-h-[60vh] px-6 md:px-20 py-12 bg-gray-50">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-serif font-semibold">
+                    <h1 className="text-2xl md:text-3xl font-semibold">
                         My Listings
                     </h1>
                     <p className="text-gray-600 mt-2">

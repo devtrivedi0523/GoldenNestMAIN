@@ -34,7 +34,7 @@ const UploadSuccess = () => {
                         <p className="text-xs uppercase tracking-[0.2em] text-emerald-600 font-semibold mb-1">
                             Submission received
                         </p>
-                        <h1 className="text-2xl md:text-3xl font-serif font-semibold">
+                        <h1 className="text-2xl md:text-3xl font-semibold">
                             Your property is now pending review
                         </h1>
                         <p className="text-sm text-gray-600 mt-2 max-w-xl">

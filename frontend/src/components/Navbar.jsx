@@ -46,7 +46,7 @@ const Navbar = () => {
                 <div className="flex items-center space-x-4 justify-end">
                     <Link
                         to="/contact"
-                        className="bg-[#F3B03E] text-white px-4 py-2 rounded hover:bg-[#e69b1a] transition"
+                        className="bg-[#F3B03E] text-black px-4 py-2 rounded hover:bg-[#e69b1a] transition"
                     >
                         Contact Us
                     </Link>

@@ -167,7 +167,7 @@ const UploadProperty = () => {
       <div className="max-w-5xl mx-auto">
         {/* <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-serif font-semibold">
+            <h1 className="text-2xl md:text-3xl font-semibold">
               List a New Property
             </h1>
             <p className="text-gray-600 mt-2 max-w-xl text-sm md:text-base">
