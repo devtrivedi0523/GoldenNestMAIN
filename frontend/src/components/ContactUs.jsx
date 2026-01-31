@@ -42,14 +42,14 @@ const ContactUs = () => {
 
                         <h4 className="font-semibold text-black mt-5 mb-3">TERMS & PRIVACY</h4>
                         <ul className="space-y-2">
-                            <li><a href="#" className="hover:underline">Trust & Safety</a></li>
+                            {/* <li><a href="#" className="hover:underline">Trust & Safety</a></li> */}
                             <li><a
                                 href="/terms"
                                 
                                 rel="noopener noreferrer"
                                 className="hover:underline"
                             >Terms & Services</a></li>
-                            <li><a href="#" className="hover:underline">Privacy Policy</a></li>
+                            {/* <li><a href="#" className="hover:underline">Privacy Policy</a></li> */}
                         </ul>
                     </div>
 

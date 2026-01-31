@@ -13,6 +13,7 @@ import {
 import RentProperties from "./components/RentProperties";
 import ContactUs from "./components/ContactUs";
 import Footer from "./components/Footer";
+import { FaSterlingSign } from "react-icons/fa6";
 
 // helper to map dropdown value -> min/max price
 const mapPriceRange = (value) => {
@@ -234,17 +235,17 @@ const Rent = () => {
 
             {/* Pricing Range -> minPrice/maxPrice */}
             <div className="flex items-center bg-white rounded-md px-3 py-2">
-              <FiDollarSign className="mr-2" />
+              <FaSterlingSign className="mr-2" />
               <select
                 className="w-full bg-white outline-none font-bold"
                 value={priceRange}
                 onChange={(e) => setPriceRange(e.target.value)}
               >
                 <option value="">Pricing Range</option>
-                <option value="100-250">$100k - $250k</option>
-                <option value="250-500">$250k - $500k</option>
-                <option value="500-1000">$500k - $1M</option>
-                <option value="1000+">$1M+</option>
+                <option value="100-250">£100k - £250k</option>
+                <option value="250-500">£250k - £500k</option>
+                <option value="500-1000">£500k - £1M</option>
+                <option value="1000+">£1M+</option>
               </select>
             </div>
 
