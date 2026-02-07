@@ -14,9 +14,12 @@ const Navbar = () => {
                 </a>
 
                 {/* Center: Navigation Tabs */}
-                <div className="hidden md:flex space-x-3 space-y-3 text-gray-600 font-medium">
+                <div className="hidden md:flex gap-6 text-gray-600 font-medium">
                     <a href="/" className="px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300">Home</a>
-
+                    <Link
+                        to="/rent"
+                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> Rent
+                    </Link>
                     <Link
                         to="/buy"
                         className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> Buy
@@ -24,23 +27,16 @@ const Navbar = () => {
 
                     <Link
                         to="/sell"
-                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> Sell
-                    </Link>
-
-                    <Link
-                        to="/rent"
-                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> Rent
+                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> Sell 
                     </Link>
 
                     <Link
                         to="/aboutus"
-                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> About Us
+                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> About Us 
                     </Link>
 
-                    
-
                 </div>
-                
+
 
                 {/* Right: Contact Us Button */}
                 <div className="flex items-center space-x-4 justify-end">

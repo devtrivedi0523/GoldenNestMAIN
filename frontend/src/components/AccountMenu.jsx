@@ -33,9 +33,11 @@ const AccountMenu = () => {
                 onClick={() => setOpen((o) => !o)}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-full border bg-white shadow-sm hover:bg-gray-50"
             >
-                <span className="h-7 w-7 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-xs font-semibold text-black">
+                <span className="h-7 w-7 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500
+                 grid text-xs font-semibold text-black leading-7">
                     {displayName.charAt(0).toUpperCase()}
                 </span>
+
 
                 <div className="flex flex-col leading-tight">
                     {/* <span className="text-[10px] uppercase tracking-wide text-gray-500">
@@ -57,7 +59,7 @@ const AccountMenu = () => {
             {open && (
                 <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-xl z-50 overflow-hidden">
                     <div className="px-4 py-3 border-b flex items-center gap-2">
-                        <span className="h-8 w-8 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-xs font-semibold text-black">
+                        <span className="h-8 w-8 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex leading-8 justify-center text-xs font-semibold text-black">
                             {displayName.charAt(0).toUpperCase()}
                         </span>
                         <div>

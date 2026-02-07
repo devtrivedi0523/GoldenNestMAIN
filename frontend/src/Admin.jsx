@@ -473,7 +473,7 @@ export default function AdminDashboard() {
                             />
                         </div>
                     </div>
-                    <div className="ml-6 h-10 w-10 rounded-full bg-[#F3B03E]" />
+                    {/* <div className="ml-6 h-10 w-10 rounded-full bg-[#F3B03E]" /> */}
                 </div>
 
                 <div className="px-6 md:px-10 lg:px-16">
