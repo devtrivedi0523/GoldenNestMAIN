@@ -51,7 +51,7 @@ const AboutUs = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-8">
                         {/* Card 1 */}
                         <div className="flex items-start space-x-4 border-r border-gray-300 pr-6">
-                            <div className="w-5 h-5 bg-orange-500 rounded-full mt-1" />
+                            <div className="w-5 h-5 bg-[#F3B03E] rounded-full mt-1" />
                             <div>
                                 <h3 className="font-semibold text-lg">Trust</h3>
                                 <p className="text-sm text-gray-600">
@@ -62,7 +62,7 @@ const AboutUs = () => {
 
                         {/* Card 2 */}
                         <div className="flex items-start space-x-4">
-                            <div className="w-5 h-5 bg-orange-500 rounded-full mt-1" />
+                            <div className="w-5 h-5 bg-[#F3B03E] rounded-full mt-1" />
                             <div>
                                 <h3 className="font-semibold text-lg">Excellence</h3>
                                 <p className="text-sm text-gray-600">
@@ -73,7 +73,7 @@ const AboutUs = () => {
 
                         {/* Card 3 */}
                         <div className="flex items-start space-x-4 border-r border-gray-300 pr-6">
-                            <div className="w-5 h-5 bg-orange-500 rounded-full mt-1" />
+                            <div className="w-5 h-5 bg-[#F3B03E] rounded-full mt-1" />
                             <div>
                                 <h3 className="font-semibold text-lg">Client-Centric</h3>
                                 <p className="text-sm text-gray-600">
@@ -84,7 +84,7 @@ const AboutUs = () => {
 
                         {/* Card 4 */}
                         <div className="flex items-start space-x-4">
-                            <div className="w-5 h-5 bg-orange-500 rounded-full mt-1" />
+                            <div className="w-5 h-5 bg-[#F3B03E] rounded-full mt-1" />
                             <div>
                                 <h3 className="font-semibold text-lg">Our Commitment</h3>
                                 <p className="text-sm text-gray-600">

@@ -15,4 +15,12 @@
     font-weight: 400;
     font-style: normal;
   }
+
+}
+
+@layer components {
+  .font-footer {
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
+  }
 }

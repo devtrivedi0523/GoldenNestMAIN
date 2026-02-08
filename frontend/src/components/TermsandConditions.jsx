@@ -191,7 +191,7 @@ export default function TermsAndConditionsImproved() {
               <a
                 href="/Terms And Conditions.pdf"
                 download
-                className="inline-flex items-center justify-center w-full rounded-md bg-amber-500 hover:bg-amber-600 text-black px-3 py-2 text-sm font-semibold shadow"
+                className="inline-flex items-center justify-center w-full rounded-md bg-[#F3B03E] hover:bg-[#e69b1a] text-black px-3 py-2 text-sm font-semibold shadow"
               >
                 Download PDF
               </a>
@@ -219,7 +219,7 @@ export default function TermsAndConditionsImproved() {
                 <a
                   href="/Terms And Conditions.pdf"
                   download
-                  className="inline-flex items-center gap-2 rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-black shadow hover:bg-amber-600"
+                  className="inline-flex items-center gap-2 rounded-md bg-[#F3B03E] px-4 py-2 text-sm font-semibold text-black shadow hover:bg-[#e69b1a]"
                 >
                   Download Terms & Conditions (PDF)
                 </a>

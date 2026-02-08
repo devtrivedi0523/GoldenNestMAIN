@@ -87,7 +87,7 @@ const RentProperties = ({ filters = {} }) => {
           </p>
         </div>
         <button
-          className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-md font-medium mt-4 md:mt-0"
+          className="bg-[#F3B03E] hover:bg-yellow-600 text-black px-4 py-2 rounded-md font-medium mt-4 md:mt-0"
           onClick={() => navigate("/rent")}
         >
           View All Rentals

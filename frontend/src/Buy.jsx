@@ -196,14 +196,14 @@ const Buy = () => {
             />
             <button
               type="submit"
-              className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-6 py-2 rounded-md"
+              className="flex items-center gap-2 bg-[#F3B03E] hover:bg-yellow-600 text-black font-semibold px-6 py-2 rounded-md"
             >
               <FiSearch />
               Find Property
             </button>
           </div>
 
-          <div className="bg-yellow-400 rounded-b-lg px-4 py-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="bg-[#F3B03E] rounded-b-lg px-4 py-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {/* Location -> city */}
             <div className="flex items-center bg-white rounded-md px-3 py-2">
               <FiMapPin className="mr-2 font-bold" />
