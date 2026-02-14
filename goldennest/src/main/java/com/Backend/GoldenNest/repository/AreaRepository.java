@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 import java.util.Optional;
 
-public interface AreaRepository extends JpaRepository<Area, Integer> {
+public interface AreaRepository extends JpaRepository<Area, Long> {
 
     Optional<Area> findByNameIgnoreCase(String name);
 
@@ -16,5 +16,5 @@ public interface AreaRepository extends JpaRepository<Area, Integer> {
     @Query("select distinct a from Area a left join fetch a.users")
     List<Area> findAllWithUsers();
 
-	Optional<Area> findById(Long areaId);
+	
 }
