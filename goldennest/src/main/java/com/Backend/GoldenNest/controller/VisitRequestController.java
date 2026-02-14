@@ -31,7 +31,7 @@ public class VisitRequestController {
     // For now we pass userId as a query param until JWT is in place
     @PostMapping
     public ResponseEntity<Void> create(@RequestBody VisitRequestCreateDto dto,
-                                       @RequestParam Integer userId) {
+                                       @RequestParam Long userId) {
 
         Property prop = properties.findById(dto.propertyId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Property not found"));

@@ -17,6 +17,10 @@ public class PropertyCreateDto {
   public String city;
   public String state;
   public String zip;
+  
+  @NotNull
+  public Long areaId;
+
 
   public Integer areaSqft;
   public Double lat;
@@ -49,6 +53,15 @@ public String getTenure() {
 public void setTenure(String tenure) {
 	this.tenure = tenure;
 }
+
+public Long getAreaId() {
+    return areaId;
+}
+
+public void setAreaId(Long areaId) {
+    this.areaId = areaId;
+}
+
 
 public LocalDate getLeaseStartDate() {
 	return leaseStartDate;

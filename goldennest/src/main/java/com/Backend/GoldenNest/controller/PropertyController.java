@@ -9,6 +9,10 @@ import com.Backend.GoldenNest.modal.User;
 import com.Backend.GoldenNest.repository.PropertyImageRepository;
 import com.Backend.GoldenNest.repository.PropertyRepository;
 import com.Backend.GoldenNest.repository.UserRepository;
+import com.Backend.GoldenNest.modal.Area;
+import com.Backend.GoldenNest.repository.AreaRepository;
+import com.Backend.GoldenNest.security.AreaAccessService;
+
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +46,8 @@ import java.util.stream.Collectors;
 public class PropertyController {
 
     private final PropertyRepository properties;
+    private final AreaRepository areas;
+    private final AreaAccessService areaAccess;
     private final PropertyImageRepository images;
 
     // Google Maps key from application.properties (NO hard-coded default)
@@ -52,10 +58,15 @@ public class PropertyController {
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
     public PropertyController(PropertyRepository properties,
-                              PropertyImageRepository images) {
-        this.properties = properties;
-        this.images = images;
-    }
+            PropertyImageRepository images,
+            AreaRepository areas,
+            AreaAccessService areaAccess) {
+this.properties = properties;
+this.images = images;
+this.areas = areas;
+this.areaAccess = areaAccess;
+}
+
 
     // ----------- LIST (cards with filters) -----------
     @GetMapping
@@ -235,6 +246,24 @@ public class PropertyController {
         }
 
         User current = getCurrentUser(); // who is creating
+        
+     // areaId required (manager/admin portal will send it)
+        if (dto.getAreaId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "areaId is required");
+        }
+
+        // If not ADMIN, enforce area assignment
+        if (!"ADMIN".equalsIgnoreCase(current.getRole())) {
+            boolean allowed = areaAccess.hasAccessToArea(current.getId(), dto.getAreaId());
+            if (!allowed) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this area");
+            }
+        }
+
+        // Load area entity and set it on property
+        Area area = areas.findById(dto.getAreaId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid areaId"));
+
 
         Property p = new Property();
         p.setTitle(dto.getTitle());
@@ -278,6 +307,8 @@ public class PropertyController {
         // required NOT NULL columns
         p.setStatus("PENDING");
         p.setOwner(current);
+        p.setArea(area);
+
 
         // geocode if missing coords
         autoGeocodeIfMissing(p);
@@ -311,11 +342,25 @@ public class PropertyController {
 
         Property p = properties.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
+        
+     // If not ADMIN, also enforce area access
+        if (!"ADMIN".equalsIgnoreCase(current.getRole())) {
+            if (p.getArea() == null) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Property has no area assigned");
+            }
+            boolean allowed = areaAccess.hasAccessToArea(current.getId(), p.getArea().getId());
+            if (!allowed) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this area's property");
+            }
+        }
+
 
         // optional: only allow owner (or admins) to edit
-        if (p.getOwner() != null && !p.getOwner().getId().equals(current.getId())) {
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(current.getRole());
+        if (!isAdmin && p.getOwner() != null && !p.getOwner().getId().equals(current.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot edit this property");
         }
+
 
         // Lease / tenure fields
         p.setTenure(dto.getTenure());
@@ -380,7 +425,7 @@ public class PropertyController {
 
             User owner = p.getOwner();
             if (owner != null) {
-                dto.ownerId = owner.getId();
+                dto.ownerId = (Long) owner.getId();
                 dto.ownerEmail = owner.getEmail();
                 dto.ownerName = (owner.getName() != null && !owner.getName().isBlank())
                         ? owner.getName()
@@ -390,6 +435,58 @@ public class PropertyController {
             return dto;
         });
     }
+    
+ // ----------- MANAGER/ADMIN LIST (restricted by area) -----------
+    @GetMapping("/dashboard")
+    public Page<PropertyCardDto> dashboardList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        User current = getCurrentUser();
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+
+        // ADMIN sees everything (all statuses)
+        if ("ADMIN".equalsIgnoreCase(current.getRole())) {
+            Page<Property> pageData = properties.findAll(pageable);
+            return pageData.map(this::toCardDtoWithStatus);
+        }
+
+        // AGENT / manager: only properties in assigned areas
+        List<Long> areaIds = current.getAreas().stream().map(a -> a.getId()).toList();
+        if (areaIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        Page<Property> pageData = properties.findByAreaIdIn(areaIds, pageable);
+        return pageData.map(this::toCardDtoWithStatus);
+    }
+    
+    private PropertyCardDto toCardDtoWithStatus(Property p) {
+        PropertyCardDto dto = new PropertyCardDto();
+        dto.id = p.getId();
+        dto.title = p.getTitle();
+        dto.city = p.getCity();
+        dto.state = p.getState();
+        dto.price = p.getPrice();
+        dto.coverImageUrl = p.getImages().isEmpty() ? null : p.getImages().get(0).getUrl();
+        dto.bedrooms = p.getBedrooms();
+        dto.bathrooms = p.getBathrooms();
+        dto.type = p.getType();
+        dto.description = p.getDescription();
+        dto.status = p.getStatus();
+
+        if (p.getOwner() != null) {
+            dto.ownerId = (Long) p.getOwner().getId();
+            dto.ownerEmail = p.getOwner().getEmail();
+            dto.ownerName = (p.getOwner().getName() != null && !p.getOwner().getName().isBlank())
+                    ? p.getOwner().getName()
+                    : p.getOwner().getEmail();
+        }
+        return dto;
+    }
+
+
 
     // ----------- CSV HELPERS -----------
     private String joinCsv(List<String> list) {

@@ -17,7 +17,7 @@ public class PropertyCardDto {
     public String description;
     public String status;
     
-    public Integer ownerId;
+    public Long ownerId;
     public String ownerName;
     public String ownerEmail;
 

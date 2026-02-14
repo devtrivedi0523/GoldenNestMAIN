@@ -93,6 +93,11 @@ public class Property {
 
     public User getOwner() { return owner; }
     public void setOwner(User owner) { this.owner = owner; }
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_id")
+    private Area area;
+
 
     
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
@@ -290,5 +295,14 @@ public class Property {
 	public void setLeaseExpiryDate(LocalDate leaseExpiryDate) {
 		this.leaseExpiryDate = leaseExpiryDate;
 	}
+	
+	public Area getArea() {
+	    return area;
+	}
+
+	public void setArea(Area area) {
+	    this.area = area;
+	}
+
 }
 

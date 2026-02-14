@@ -43,15 +43,15 @@ public class UserController {
 
     // DTO returned to frontend
     public static class MeDto {
-        private Integer id;
+        private Long id;
         private String name;
         private String email;
         private String role;
 
         public MeDto() {}
 
-        public Integer getId() { return id; }
-        public void setId(Integer id) { this.id = id; }
+        public Long getId() { return id; }
+        public void setId(Long long1) { this.id = long1; }
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
