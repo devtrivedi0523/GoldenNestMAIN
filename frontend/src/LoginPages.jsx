@@ -1,40 +1,35 @@
-// src/pages/LoginChoice.jsx
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { setAccessToken, clearAccessToken, fetchCurrentUser } from "../auth";
+import { setAccessToken } from "./auth";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
 
-function normalizeRole(r) {
-  return String(r || "").toUpperCase();
-}
-
-export default function LoginChoice() {
+export default function Login() {
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState(null); // "ADMIN" | "AGENT"
+  const [mode, setMode] = useState("ADMIN"); // ADMIN | AGENT
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function doLogin(e) {
-    e.preventDefault();
-    if (!mode) {
-      setError("Please choose Admin or Agent login first.");
-      return;
-    }
+  const canSubmit = useMemo(() => {
+    return email.trim() && password.trim() && !loading;
+  }, [email, password, loading]);
 
-    setLoading(true);
+  async function handleLogin(e) {
+    e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
+      // 1) Login -> token
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email, password }),
       });
 
       const text = await res.text();
@@ -46,57 +41,59 @@ export default function LoginChoice() {
       }
 
       if (!res.ok) {
-        const msg =
+        throw new Error(
           (data && data.message) ||
-          (typeof data === "string" && data) ||
-          `Login failed (${res.status})`;
-        throw new Error(msg);
+            (typeof data === "string" && data) ||
+            `Login failed (${res.status})`
+        );
       }
 
-      // Support multiple token field names
+      // IMPORTANT: adjust token key if your backend returns different name
       const token =
-        data?.accessToken ||
-        data?.token ||
-        data?.jwt ||
-        data?.access_token ||
-        data?.accessToken?.token;
+        data?.token || data?.accessToken || data?.jwt || data?.data?.token;
 
-      if (!token || typeof token !== "string") {
-        throw new Error("Login succeeded but backend did not return a token.");
+      if (!token) {
+        throw new Error("Login succeeded but token was not found in response.");
       }
 
       setAccessToken(token);
 
-      // Verify role via /me
-      const me = await fetchCurrentUser();
-      if (!me) {
-        clearAccessToken();
-        throw new Error("Login succeeded but /api/auth/me failed.");
+      // 2) Fetch /me -> role
+      const meRes = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+      });
+
+      const meText = await meRes.text();
+      let me = null;
+      try {
+        me = meText ? JSON.parse(meText) : null;
+      } catch {
+        me = meText;
       }
 
-      const role = normalizeRole(me.role);
-
-      if (mode === "ADMIN") {
-        if (!(role === "ADMIN" || role === "SUPER_ADMIN")) {
-          clearAccessToken();
-          throw new Error(
-            `This account is ${role}. Please use Agent login (or change role in DB).`
-          );
-        }
-        navigate("/admin", { replace: true });
-        return;
-      }
-
-      // mode === "AGENT"
-      if (role !== "AGENT") {
-        clearAccessToken();
+      if (!meRes.ok) {
         throw new Error(
-          `This account is ${role}. Please use Admin login (or change role in DB).`
+          (me && me.message) ||
+            (typeof me === "string" && me) ||
+            `Failed to fetch profile (${meRes.status})`
         );
       }
 
-      navigate("/agent", { replace: true });
+      const role = String(me?.role || "").toUpperCase();
+
+      // 3) Enforce selected login type
+      if (mode === "ADMIN" && role !== "ADMIN" && role !== "SUPER_ADMIN") {
+        throw new Error(`This account is ${role || "UNKNOWN"} — not an ADMIN.`);
+      }
+      if (mode === "AGENT" && role !== "AGENT") {
+        throw new Error(`This account is ${role || "UNKNOWN"} — not an AGENT.`);
+      }
+
+      // 4) Redirect
+      navigate(mode === "ADMIN" ? "/admin" : "/agent");
     } catch (err) {
+      console.error(err);
       setError(err?.message || "Login failed");
     } finally {
       setLoading(false);
@@ -104,38 +101,38 @@ export default function LoginChoice() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f6f3] px-6 md:px-10 lg:px-16 py-10 flex items-center justify-center">
-      <div className="w-full max-w-md bg-white border rounded-2xl shadow-sm p-6">
-        <h1 className="text-2xl font-bold">Log in</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Choose how you want to log in, then enter your credentials.
+    <div className="min-h-screen bg-[#f7f6f3] px-6 md:px-10 lg:px-16 py-10">
+      <div className="max-w-xl mx-auto bg-white border rounded-2xl shadow-sm p-6 md:p-8">
+        <h1 className="text-3xl font-bold">Login</h1>
+        <p className="mt-2 text-gray-600">
+          Choose a portal, then sign in.
         </p>
 
-        {/* Mode buttons */}
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        {/* Mode selector */}
+        <div className="mt-6 flex gap-2">
           <button
             type="button"
             onClick={() => setMode("ADMIN")}
             className={
-              "rounded-xl px-4 py-3 font-semibold border transition " +
+              "px-4 py-2 rounded-full text-sm font-medium border " +
               (mode === "ADMIN"
-                ? "bg-[#F3B03E] border-[#F3B03E]"
+                ? "bg-[#F3B03E] border-[#F3B03E] text-black"
                 : "bg-white hover:bg-black/5")
             }
           >
-            Admin Login
+            Admin Portal
           </button>
           <button
             type="button"
             onClick={() => setMode("AGENT")}
             className={
-              "rounded-xl px-4 py-3 font-semibold border transition " +
+              "px-4 py-2 rounded-full text-sm font-medium border " +
               (mode === "AGENT"
-                ? "bg-[#F3B03E] border-[#F3B03E]"
+                ? "bg-[#F3B03E] border-[#F3B03E] text-black"
                 : "bg-white hover:bg-black/5")
             }
           >
-            Agent Login
+            Agent Portal
           </button>
         </div>
 
@@ -145,7 +142,7 @@ export default function LoginChoice() {
           </div>
         )}
 
-        <form onSubmit={doLogin} className="mt-6 space-y-4">
+        <form onSubmit={handleLogin} className="mt-6 space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
@@ -154,8 +151,6 @@ export default function LoginChoice() {
               className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
               placeholder="you@example.com"
               autoComplete="email"
-              required
-              disabled={loading}
             />
           </div>
 
@@ -164,21 +159,19 @@ export default function LoginChoice() {
             <input
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              type="password"
               className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
               placeholder="••••••••"
-              type="password"
               autoComplete="current-password"
-              required
-              disabled={loading}
             />
           </div>
 
           <button
             type="submit"
-            disabled={loading || !mode}
+            disabled={!canSubmit}
             className="w-full rounded-full px-5 py-2 font-medium bg-black text-white hover:bg-black/90 disabled:opacity-60"
           >
-            {loading ? "Logging in..." : mode ? `Continue as ${mode}` : "Choose a mode"}
+            {loading ? "Signing in…" : `Sign in to ${mode === "ADMIN" ? "Admin" : "Agent"} Portal`}
           </button>
         </form>
       </div>
