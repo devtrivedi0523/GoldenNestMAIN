@@ -54,7 +54,7 @@ public class SecurityConfig {
             	    .requestMatchers("/api/properties/mine").authenticated()
 
             	    // ⚠️ WARNING: admin should NOT be public in prod
-            	    .requestMatchers("/api/admin/**").permitAll()
+            	    .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
             	    // ----------------------------
             	    // Everything else

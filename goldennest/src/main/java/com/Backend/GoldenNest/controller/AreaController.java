@@ -24,7 +24,7 @@ public class AreaController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Area> createArea(@RequestBody Area area) {
         if (area.getName() == null || area.getName().isBlank()) {
             return ResponseEntity.badRequest().build();
@@ -36,7 +36,7 @@ public class AreaController {
     }
 
     @PutMapping("/{areaId}/assign/{userId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> assignUserToArea(@PathVariable Long areaId, @PathVariable Long userId) {
 
         Area area = areaRepository.findById(areaId).orElseThrow();
@@ -53,7 +53,7 @@ public class AreaController {
     }
 
     @DeleteMapping("/{areaId}/remove/{userId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> removeUserFromArea(@PathVariable Long areaId, @PathVariable Long userId) {
 
         Area area = areaRepository.findById(areaId).orElseThrow();
