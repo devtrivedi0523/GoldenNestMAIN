@@ -4,6 +4,9 @@ import com.Backend.GoldenNest.modal.Area;
 import com.Backend.GoldenNest.modal.User;
 import com.Backend.GoldenNest.repository.AreaRepository;
 import com.Backend.GoldenNest.repository.UserRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +37,7 @@ public class AreaController {
         }
         return ResponseEntity.ok(areaRepository.save(area));
     }
-
+    @Transactional
     @PutMapping("/{areaId}/assign/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> assignUserToArea(@PathVariable Long areaId, @PathVariable Long userId) {
@@ -51,7 +54,8 @@ public class AreaController {
 
         return ResponseEntity.ok().build();
     }
-
+    
+    @Transactional
     @DeleteMapping("/{areaId}/remove/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> removeUserFromArea(@PathVariable Long areaId, @PathVariable Long userId) {
