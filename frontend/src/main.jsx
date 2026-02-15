@@ -24,6 +24,8 @@ import UploadSuccess from './components/UploadSuccess.jsx';
 import AdvancedProperty from './components/AdvancedProperty.jsx';
 import TermsAndConditions from './components/TermsandConditions.jsx';
 import AdminAreas from './components/AdminAreas.jsx';
+import LoginChoice from './LoginPages.jsx';
+import AgentDashboard from './Agent.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -55,10 +57,13 @@ createRoot(document.getElementById('root')).render(
         <Route path="/rent/properties/:id" element={<PropertyDetails />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/account/listings" element={<MyListings />} />
-        <Route path='/terms' element = {<TermsAndConditions />} />
+        <Route path='/terms' element={<TermsAndConditions />} />
         <Route path="/admin/areas" element={<AdminAreas />} />
 
-        
+        <Route path="/login" element={<LoginChoice />} />
+        <Route path="/agent" element={<AgentDashboard />} />
+
+
 
 
 
