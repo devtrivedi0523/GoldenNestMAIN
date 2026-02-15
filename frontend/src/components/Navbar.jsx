@@ -35,6 +35,11 @@ const Navbar = () => {
                         className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> About Us 
                     </Link>
 
+                    <Link
+                        to="/login"
+                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> Log In 
+                    </Link>
+
                 </div>
 
 
