@@ -393,7 +393,7 @@ this.areaAccess = areaAccess;
         }
 
         String email = auth.getName(); // assuming username = email in JWT
-        return users.findByEmail(email)
+        return users.findByEmailWithAreas(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
 
