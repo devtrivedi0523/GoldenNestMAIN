@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;goldennest/src/main/resources/db/migration/V8_add_areas_and_user_areas.sql&apos; to &apos;V8__add_areas_and_user_areas.sql&apos;" description="Rename resource &apos;V8_add_areas_and_user_areas.sql&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/main/resources/db/migration/V8_add_areas_and_user_areas.sql" name="V8__add_areas_and_user_areas.sql" stamp="1770694361574" updateReferences="true"/>
+</session>

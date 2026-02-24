@@ -3,15 +3,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAccessToken } from "../auth";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
+const API_BASE =
+  import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
 
 const UploadProperty = () => {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    // ✅ NEW
-    areaId: "",
-
+    // ✅ Area removed from UI. We'll send null unless you later re-enable it.
     title: "",
     description: "",
     price: "",
@@ -39,12 +38,10 @@ const UploadProperty = () => {
   });
 
   const [submitting, setSubmitting] = useState(false);
-  const [loadingMeta, setLoadingMeta] = useState(true);
+  const [loadingMe, setLoadingMe] = useState(true);
   const [error, setError] = useState("");
 
-  // ✅ NEW: user + areas
   const [me, setMe] = useState(null);
-  const [areas, setAreas] = useState([]);
 
   const token = getAccessToken();
 
@@ -53,60 +50,46 @@ const UploadProperty = () => {
     setForm((f) => ({ ...f, [name]: value }));
   };
 
-  // ✅ Load current user + areas
+  // ✅ Load current user ONLY (no areas fetch)
   useEffect(() => {
     let cancelled = false;
 
-    async function loadMeta() {
-      setLoadingMeta(true);
+    async function loadMe() {
+      setLoadingMe(true);
       setError("");
 
       if (!token) {
         setMe(null);
-        setAreas([]);
-        setLoadingMeta(false);
+        setLoadingMe(false);
         return;
       }
 
       try {
         const headers = { Authorization: `Bearer ${token}` };
 
-        // 1) me
         const meRes = await fetch(`${API_BASE}/api/auth/me`, {
           headers,
           credentials: "include",
         });
+
         if (!meRes.ok) {
           const txt = await meRes.text();
           throw new Error(`Auth check failed (${meRes.status}): ${txt}`);
         }
+
         const meData = await meRes.json();
-
-        // 2) areas (needs token)
-        const areasRes = await fetch(`${API_BASE}/api/areas`, {
-          headers,
-          credentials: "include",
-        });
-        if (!areasRes.ok) {
-          const txt = await areasRes.text();
-          throw new Error(`Areas load failed (${areasRes.status}): ${txt}`);
-        }
-        const areasData = await areasRes.json();
-
         if (cancelled) return;
         setMe(meData);
-        setAreas(Array.isArray(areasData) ? areasData : []);
       } catch (e) {
         if (cancelled) return;
-        setError(e.message || "Failed to load user/areas");
+        setError(e.message || "Failed to load profile");
         setMe(null);
-        setAreas([]);
       } finally {
-        if (!cancelled) setLoadingMeta(false);
+        if (!cancelled) setLoadingMe(false);
       }
     }
 
-    loadMeta();
+    loadMe();
     return () => {
       cancelled = true;
     };
@@ -115,43 +98,20 @@ const UploadProperty = () => {
   const role = String(me?.role || "").toUpperCase();
   const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
   const isAgent = role === "AGENT";
+  const isUser = role === "USER";
 
-  // ✅ Filter areas for AGENT only (assigned ones)
-  const availableAreas = useMemo(() => {
-    if (!Array.isArray(areas)) return [];
-    if (isAdmin) return areas;
-
-    if (isAgent && me) {
-      const myId = me.id;
-      const myEmail = String(me.email || "").toLowerCase();
-      return areas.filter((a) => {
-        const users = Array.isArray(a.users) ? a.users : [];
-        return users.some((u) => {
-          const uid = u?.id;
-          const uemail = String(u?.email || "").toLowerCase();
-          return (uid != null && String(uid) === String(myId)) || (myEmail && uemail === myEmail);
-        });
-      });
-    }
-
-    // USER or unknown role -> no areas allowed (backend will block anyway)
-    return [];
-  }, [areas, isAdmin, isAgent, me]);
-
-  // If only 1 area available, auto-select it (nice UX)
-  useEffect(() => {
-    if (!form.areaId && availableAreas.length === 1) {
-      setForm((f) => ({ ...f, areaId: String(availableAreas[0].id) }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availableAreas.length]);
+  // ✅ Allow all logged-in roles to publish
+  const canPublishRole = isAdmin || isAgent || isUser;
 
   const canSubmit =
     !!token &&
-    !loadingMeta &&
-    !!String(form.areaId || "").trim() &&
-    (isAdmin || isAgent) &&
-    availableAreas.length > 0;
+    !loadingMe &&
+    canPublishRole &&
+    !!String(form.title || "").trim() &&
+    !!String(form.price || "").trim() &&
+    !!String(form.bedrooms || "").trim() &&
+    !!String(form.bathrooms || "").trim() &&
+    !!String(form.address1 || "").trim();
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -161,18 +121,18 @@ const UploadProperty = () => {
     try {
       if (!token) {
         setError("You must be logged in to upload a property.");
-        setSubmitting(false);
         return;
       }
 
-      if (!String(form.areaId || "").trim()) {
-        setError("Please select an Area before publishing.");
-        setSubmitting(false);
+      if (!canPublishRole) {
+        setError(
+          `Your role is ${me?.role || "UNKNOWN"}. You cannot publish properties.`
+        );
         return;
       }
 
-      // Build images array from comma-separated input
-      const images = form.imagesInput
+      // Build arrays from comma-separated input
+      const images = (form.imagesInput || "")
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
@@ -193,8 +153,9 @@ const UploadProperty = () => {
         .filter(Boolean);
 
       const payload = {
-        // ✅ NEW: REQUIRED by backend now
-        areaId: Number(form.areaId),
+        // ✅ No area selection for users (and we chose not to fetch areas)
+        // Backend must allow null areaId.
+        areaId: null,
 
         title: form.title,
         description: form.description,
@@ -216,7 +177,9 @@ const UploadProperty = () => {
 
         tenure: form.tenure || null,
         leaseStartDate: form.leaseStartDate || null,
-        leaseTermYears: form.leaseTermYears ? Number(form.leaseTermYears) : null,
+        leaseTermYears: form.leaseTermYears
+          ? Number(form.leaseTermYears)
+          : null,
         leaseExpiryDate: form.leaseExpiryDate || null,
         floorPlans,
         virtualTours,
@@ -240,7 +203,7 @@ const UploadProperty = () => {
         throw new Error(`Upload failed (${res.status}): ${txt}`);
       }
 
-      const data = await res.json(); // { id, status }
+      const data = await res.json(); // { id, status, propertyStatus? }
 
       // Navigate to advanced step (your existing flow)
       navigate(`/sell/upload/${data.id}/advanced`);
@@ -252,10 +215,9 @@ const UploadProperty = () => {
     }
   };
 
-  // Small derived helper: preview image URLs
   const imageUrls = useMemo(
     () =>
-      form.imagesInput
+      (form.imagesInput || "")
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
@@ -275,25 +237,28 @@ const UploadProperty = () => {
             </div>
           )}
 
-          {/* ✅ NEW: role/area status */}
+          {/* ✅ Profile status only (no areas) */}
           <div className="p-4 rounded-xl border bg-[#fffaf0]">
-            {loadingMeta ? (
-              <div className="text-sm text-gray-700">Loading your profile & areas…</div>
+            {loadingMe ? (
+              <div className="text-sm text-gray-700">Loading your profile…</div>
             ) : !token ? (
               <div className="text-sm text-gray-700">
                 You’re not logged in. Please log in first.
               </div>
-            ) : !(isAdmin || isAgent) ? (
+            ) : !canPublishRole ? (
               <div className="text-sm text-gray-700">
-                Your role is <b>{me?.role || "UNKNOWN"}</b>. Only <b>ADMIN</b> or <b>AGENT</b> can publish properties.
-              </div>
-            ) : availableAreas.length === 0 ? (
-              <div className="text-sm text-gray-700">
-                No areas are assigned to your account yet. Ask an admin to assign you to an area.
+                Your role is <b>{me?.role || "UNKNOWN"}</b>. You cannot publish
+                properties.
               </div>
             ) : (
               <div className="text-sm text-gray-700">
-                Logged in as <b>{me?.email}</b> ({me?.role}). Select an area to publish.
+                Logged in as <b>{me?.email}</b> ({me?.role}). Fill the form to
+                publish.
+                {!isAdmin && !isAgent && (
+                  <span className="block mt-1 text-xs text-gray-600">
+                    Your listing will be reviewed before going live.
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -303,36 +268,12 @@ const UploadProperty = () => {
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold">Basic details</h2>
               <span className="text-xs text-gray-500">
-                Fields marked <span className="text-red-500">*</span> are required
+                Fields marked <span className="text-red-500">*</span> are
+                required
               </span>
             </div>
 
             <div className="space-y-4">
-              {/* ✅ NEW: Area select (required) */}
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Area <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="areaId"
-                  value={form.areaId}
-                  onChange={onChange}
-                  className="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                  disabled={loadingMeta || !token || !(isAdmin || isAgent) || availableAreas.length === 0}
-                  required
-                >
-                  <option value="">Select area…</option>
-                  {availableAreas.map((a) => (
-                    <option key={a.id} value={String(a.id)}>
-                      {a.name} (ID: {a.id})
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  This listing will be managed under the selected area.
-                </p>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Title <span className="text-red-500">*</span>
@@ -348,7 +289,9 @@ const UploadProperty = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
+                <label className="block text-sm font-medium mb-1">
+                  Description
+                </label>
                 <textarea
                   name="description"
                   value={form.description}
@@ -357,7 +300,8 @@ const UploadProperty = () => {
                   placeholder="Describe the property, layout, surroundings, and any special features."
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Tip: Mention light, storage, nearby transport, schools, or amenities to make the listing more attractive.
+                  Tip: Mention light, storage, nearby transport, schools, or
+                  amenities to make the listing more attractive.
                 </p>
               </div>
 
@@ -475,6 +419,7 @@ const UploadProperty = () => {
           {/* PROPERTY DETAILS */}
           <div className="border-t border-gray-200 pt-6">
             <h2 className="text-lg font-semibold mb-3">Property details</h2>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -591,12 +536,15 @@ const UploadProperty = () => {
                 placeholder="https://image1.jpg, https://image2.jpg"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Paste one or more image URLs separated by commas. The first one will be used as the main cover image.
+                Paste one or more image URLs separated by commas. The first one
+                will be used as the main cover image.
               </p>
 
               {imageUrls.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-xs font-medium text-gray-600 mb-2">Preview</p>
+                  <p className="text-xs font-medium text-gray-600 mb-2">
+                    Preview
+                  </p>
                   <div className="flex flex-wrap gap-3">
                     {imageUrls.map((url, i) => (
                       <div
@@ -629,16 +577,12 @@ const UploadProperty = () => {
                 canSubmit
                   ? ""
                   : !token
-                    ? "Login required"
-                    : loadingMeta
-                      ? "Loading profile..."
-                      : !(isAdmin || isAgent)
-                        ? "Only ADMIN/AGENT can publish"
-                        : availableAreas.length === 0
-                          ? "No assigned areas"
-                          : !form.areaId
-                            ? "Select an area"
-                            : "Cannot submit"
+                  ? "Login required"
+                  : loadingMe
+                  ? "Loading profile..."
+                  : !canPublishRole
+                  ? "Role cannot publish"
+                  : "Fill required fields"
               }
             >
               {submitting && (

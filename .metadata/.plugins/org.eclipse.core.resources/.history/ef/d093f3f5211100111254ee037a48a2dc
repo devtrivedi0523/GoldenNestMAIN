@@ -247,38 +247,39 @@ public class PropertyController {
 
         User current = getCurrentUser(); // who is creating
 
-        // ---- Role checks ----
+        // areaId required (frontend will send it)
+        Area area = null;
+
+        if (dto.getAreaId() != null) {
+            area = areas.findById(dto.getAreaId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid areaId"));
+        }
+
+        // ✅ UPDATED ROLE LOGIC:
+        // - ADMIN / SUPER_ADMIN: can create anywhere
+        // - AGENT: must be assigned to area
+        // - USER: can create in any valid area (recommended: status PENDING)
         String role = current.getRole() == null ? "" : current.getRole().toUpperCase();
         boolean isAdmin = role.equals("ADMIN") || role.equals("SUPER_ADMIN");
         boolean isAgent = role.equals("AGENT");
-        boolean isUser  = role.equals("USER");
+        boolean isUser = role.equals("USER");
 
         if (!isAdmin && !isAgent && !isUser) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Role not allowed to create properties");
         }
 
-        // ---- Area handling (OPTIONAL for USER/ADMIN, REQUIRED for AGENT) ----
-        Long areaId = dto.getAreaId();
-
-        if (isAgent && areaId == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "areaId is required for AGENT");
-        }
-
-        Area area = null;
-        if (areaId != null) {
-            area = areas.findById(areaId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid areaId"));
-        }
-
-        // AGENT must be assigned to the area
+        // Only AGENT must be assigned to the area.
         if (isAgent) {
-            boolean allowed = areaAccess.hasAccessToArea(current.getId(), areaId);
+            boolean allowed = areaAccess.hasAccessToArea(current.getId(), dto.getAreaId());
             if (!allowed) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this area");
             }
         }
 
-        // ---- Create property ----
+        // Load area entity and set it on property
+        Area area = areas.findById(dto.getAreaId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid areaId"));
+
         Property p = new Property();
         p.setTitle(dto.getTitle());
         p.setDescription(dto.getDescription());
@@ -291,7 +292,7 @@ public class PropertyController {
         p.setZip(dto.getZip());
         p.setAreaSqft(dto.getAreaSqft());
 
-        // coords
+        // If frontend sends lat/lng, we respect them; otherwise we'll geocode below
         p.setLat(dto.getLat());
         p.setLng(dto.getLng());
 
@@ -306,7 +307,7 @@ public class PropertyController {
         p.setLeaseTermYears(dto.getLeaseTermYears());
         p.setLeaseExpiryDate(dto.getLeaseExpiryDate());
 
-        // extra media (CSV)
+        // extra media from advanced form (saved as CSV)
         p.setFloorPlans(joinCsv(dto.getFloorPlans()));
         p.setVirtualTours(joinCsv(dto.getVirtualTours()));
         p.setDocuments(joinCsv(dto.getDocuments()));
@@ -318,12 +319,16 @@ public class PropertyController {
         }
         p.setType(typeValue);
 
-        // status rule
-        p.setStatus((isAdmin || isAgent) ? "APPROVED" : "PENDING");
+        // ✅ UPDATED STATUS RULE:
+        // - Admin/Agent: auto approve
+        // - User: pending
+        if (isAdmin || isAgent) {
+            p.setStatus("APPROVED");
+        } else {
+            p.setStatus("PENDING");
+        }
 
         p.setOwner(current);
-
-        // ✅ Area can be null for USER listings (or ADMIN if you want)
         p.setArea(area);
 
         // geocode if missing coords
@@ -331,7 +336,6 @@ public class PropertyController {
 
         Property saved = properties.save(p);
 
-        // images
         if (dto.getImages() != null) {
             int sort = 0;
             for (String url : dto.getImages()) {
@@ -350,7 +354,7 @@ public class PropertyController {
         body.put("propertyStatus", saved.getStatus());
         return ResponseEntity.ok(body);
     }
-    
+
     // ----------- ADVANCED UPDATE -----------
     @PutMapping("/{id}/advanced")
     public ResponseEntity<Map<String, Object>> updateAdvanced(
