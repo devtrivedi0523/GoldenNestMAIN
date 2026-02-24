@@ -10,7 +10,6 @@ const UploadProperty = () => {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    // ✅ Area removed from UI. We'll send null unless you later re-enable it.
     title: "",
     description: "",
     price: "",
@@ -50,7 +49,7 @@ const UploadProperty = () => {
     setForm((f) => ({ ...f, [name]: value }));
   };
 
-  // ✅ Load current user ONLY (no areas fetch)
+  // ✅ Load current user ONLY (no areas endpoint fetch)
   useEffect(() => {
     let cancelled = false;
 
@@ -103,6 +102,21 @@ const UploadProperty = () => {
   // ✅ Allow all logged-in roles to publish
   const canPublishRole = isAdmin || isAgent || isUser;
 
+  // ✅ Pull first assigned areaId from /api/auth/me for ADMIN/AGENT (no /api/areas call)
+  const assignedAreaId = useMemo(() => {
+    const arr = Array.isArray(me?.areas) ? me.areas : [];
+    if (arr.length === 0) return null;
+
+    // be defensive with types
+    const id = arr[0]?.id;
+    return id != null ? Number(id) : null;
+  }, [me]);
+
+  const assignedAreaName = useMemo(() => {
+    const arr = Array.isArray(me?.areas) ? me.areas : [];
+    return arr.length > 0 ? String(arr[0]?.name || "") : "";
+  }, [me]);
+
   const canSubmit =
     !!token &&
     !loadingMe &&
@@ -131,6 +145,16 @@ const UploadProperty = () => {
         return;
       }
 
+      // ✅ IMPORTANT:
+      // - AGENT requires areaId (backend enforces it)
+      // - ADMIN also usually works best with an area assigned, but backend allows null
+      if ((isAgent || isAdmin) && !assignedAreaId) {
+        setError(
+          "No area is assigned to your account. Ask an ADMIN to assign you to an area."
+        );
+        return;
+      }
+
       // Build arrays from comma-separated input
       const images = (form.imagesInput || "")
         .split(",")
@@ -153,9 +177,9 @@ const UploadProperty = () => {
         .filter(Boolean);
 
       const payload = {
-        // ✅ No area selection for users (and we chose not to fetch areas)
-        // Backend must allow null areaId.
-        areaId: null,
+        // ✅ USER: null (goes PENDING)
+        // ✅ AGENT/ADMIN: auto use assigned area
+        areaId: isUser ? null : assignedAreaId,
 
         title: form.title,
         description: form.description,
@@ -205,7 +229,6 @@ const UploadProperty = () => {
 
       const data = await res.json(); // { id, status, propertyStatus? }
 
-      // Navigate to advanced step (your existing flow)
       navigate(`/sell/upload/${data.id}/advanced`);
     } catch (err) {
       console.error(err);
@@ -237,7 +260,7 @@ const UploadProperty = () => {
             </div>
           )}
 
-          {/* ✅ Profile status only (no areas) */}
+          {/* ✅ Profile status only (no areas fetch) */}
           <div className="p-4 rounded-xl border bg-[#fffaf0]">
             {loadingMe ? (
               <div className="text-sm text-gray-700">Loading your profile…</div>
@@ -254,9 +277,16 @@ const UploadProperty = () => {
               <div className="text-sm text-gray-700">
                 Logged in as <b>{me?.email}</b> ({me?.role}). Fill the form to
                 publish.
-                {!isAdmin && !isAgent && (
+                {isUser && (
                   <span className="block mt-1 text-xs text-gray-600">
                     Your listing will be reviewed before going live.
+                  </span>
+                )}
+                {(isAgent || isAdmin) && (
+                  <span className="block mt-1 text-xs text-gray-600">
+                    {assignedAreaId
+                      ? `Publishing under assigned area: ${assignedAreaName || "Area"} (ID: ${assignedAreaId})`
+                      : "No area assigned to your account."}
                   </span>
                 )}
               </div>
@@ -268,8 +298,7 @@ const UploadProperty = () => {
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold">Basic details</h2>
               <span className="text-xs text-gray-500">
-                Fields marked <span className="text-red-500">*</span> are
-                required
+                Fields marked <span className="text-red-500">*</span> are required
               </span>
             </div>
 
@@ -289,9 +318,7 @@ const UploadProperty = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Description
-                </label>
+                <label className="block text-sm font-medium mb-1">Description</label>
                 <textarea
                   name="description"
                   value={form.description}
@@ -300,8 +327,7 @@ const UploadProperty = () => {
                   placeholder="Describe the property, layout, surroundings, and any special features."
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Tip: Mention light, storage, nearby transport, schools, or
-                  amenities to make the listing more attractive.
+                  Tip: Mention light, storage, nearby transport, schools, or amenities to make the listing more attractive.
                 </p>
               </div>
 
@@ -435,9 +461,7 @@ const UploadProperty = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Latitude
-                </label>
+                <label className="block text-sm font-medium mb-1">Latitude</label>
                 <input
                   name="lat"
                   type="number"
@@ -448,9 +472,7 @@ const UploadProperty = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Longitude
-                </label>
+                <label className="block text-sm font-medium mb-1">Longitude</label>
                 <input
                   name="lng"
                   type="number"
@@ -464,9 +486,7 @@ const UploadProperty = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Location tag
-                </label>
+                <label className="block text-sm font-medium mb-1">Location tag</label>
                 <select
                   name="locationTag"
                   value={form.locationTag}
@@ -482,9 +502,7 @@ const UploadProperty = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Property type
-                </label>
+                <label className="block text-sm font-medium mb-1">Property type</label>
                 <select
                   name="propertyType"
                   value={form.propertyType}
@@ -498,9 +516,7 @@ const UploadProperty = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Year built
-                </label>
+                <label className="block text-sm font-medium mb-1">Year built</label>
                 <select
                   name="yearBuilt"
                   value={form.yearBuilt}
@@ -536,15 +552,12 @@ const UploadProperty = () => {
                 placeholder="https://image1.jpg, https://image2.jpg"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Paste one or more image URLs separated by commas. The first one
-                will be used as the main cover image.
+                Paste one or more image URLs separated by commas. The first one will be used as the main cover image.
               </p>
 
               {imageUrls.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-xs font-medium text-gray-600 mb-2">
-                    Preview
-                  </p>
+                  <p className="text-xs font-medium text-gray-600 mb-2">Preview</p>
                   <div className="flex flex-wrap gap-3">
                     {imageUrls.map((url, i) => (
                       <div
