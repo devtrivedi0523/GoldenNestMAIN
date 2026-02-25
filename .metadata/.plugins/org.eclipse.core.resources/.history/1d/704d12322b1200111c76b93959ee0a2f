@@ -46,13 +46,6 @@ public class Property {
     private Integer leaseTermYears;
     private LocalDate leaseExpiryDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_agent_id")
-    private User assignedAgent;
-
-    public User getAssignedAgent() { return assignedAgent; }
-    public void setAssignedAgent(User assignedAgent) { this.assignedAgent = assignedAgent; }
-    
     @Column(columnDefinition = "text")
     private String floorPlans;
 
