@@ -2,12 +2,13 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { setAccessToken } from "./auth";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
+const API_BASE =
+  import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
 
 export default function Login() {
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState("ADMIN"); // ADMIN | AGENT
+  const [mode, setMode] = useState("ADMIN"); // ADMIN | COMPANY | AGENT
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -48,7 +49,6 @@ export default function Login() {
         );
       }
 
-      // IMPORTANT: adjust token key if your backend returns different name
       const token =
         data?.token || data?.accessToken || data?.jwt || data?.data?.token;
 
@@ -58,7 +58,7 @@ export default function Login() {
 
       setAccessToken(token);
 
-      // 2) Fetch /me -> role
+      // 2) Fetch /me -> role (+ companyId if you added it)
       const meRes = await fetch(`${API_BASE}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
@@ -82,16 +82,30 @@ export default function Login() {
 
       const role = String(me?.role || "").toUpperCase();
 
-      // 3) Enforce selected login type
+      // 3) Enforce selected portal type
       if (mode === "ADMIN" && role !== "ADMIN" && role !== "SUPER_ADMIN") {
         throw new Error(`This account is ${role || "UNKNOWN"} — not an ADMIN.`);
+      }
+      if (mode === "COMPANY" && role !== "COMPANY") {
+        throw new Error(
+          `This account is ${role || "UNKNOWN"} — not a COMPANY account.`
+        );
       }
       if (mode === "AGENT" && role !== "AGENT") {
         throw new Error(`This account is ${role || "UNKNOWN"} — not an AGENT.`);
       }
 
-      // 4) Redirect
-      navigate(mode === "ADMIN" ? "/admin" : "/agent");
+      // Optional: Company accounts must have companyId set (recommended)
+      if (role === "COMPANY" && !me?.companyId && !me?.company?.id) {
+        throw new Error(
+          "This COMPANY account has no company assigned (companyId is missing)."
+        );
+      }
+
+      // 4) Redirect by mode
+      if (mode === "ADMIN") navigate("/admin");
+      else if (mode === "COMPANY") navigate("/company");
+      else navigate("/agent");
     } catch (err) {
       console.error(err);
       setError(err?.message || "Login failed");
@@ -104,12 +118,10 @@ export default function Login() {
     <div className="min-h-screen bg-[#f7f6f3] px-6 md:px-10 lg:px-16 py-10">
       <div className="max-w-xl mx-auto bg-white border rounded-2xl shadow-sm p-6 md:p-8">
         <h1 className="text-3xl font-bold">Login</h1>
-        <p className="mt-2 text-gray-600">
-          Choose a portal, then sign in.
-        </p>
+        <p className="mt-2 text-gray-600">Choose a portal, then sign in.</p>
 
         {/* Mode selector */}
-        <div className="mt-6 flex gap-2">
+        <div className="mt-6 flex gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => setMode("ADMIN")}
@@ -122,6 +134,20 @@ export default function Login() {
           >
             Admin Portal
           </button>
+
+          <button
+            type="button"
+            onClick={() => setMode("COMPANY")}
+            className={
+              "px-4 py-2 rounded-full text-sm font-medium border " +
+              (mode === "COMPANY"
+                ? "bg-[#F3B03E] border-[#F3B03E] text-black"
+                : "bg-white hover:bg-black/5")
+            }
+          >
+            Company Portal
+          </button>
+
           <button
             type="button"
             onClick={() => setMode("AGENT")}
@@ -171,7 +197,15 @@ export default function Login() {
             disabled={!canSubmit}
             className="w-full rounded-full px-5 py-2 font-medium bg-black text-white hover:bg-black/90 disabled:opacity-60"
           >
-            {loading ? "Signing in…" : `Sign in to ${mode === "ADMIN" ? "Admin" : "Agent"} Portal`}
+            {loading
+              ? "Signing in…"
+              : `Sign in to ${
+                  mode === "ADMIN"
+                    ? "Admin"
+                    : mode === "COMPANY"
+                    ? "Company"
+                    : "Agent"
+                } Portal`}
           </button>
         </form>
       </div>

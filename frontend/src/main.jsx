@@ -26,6 +26,7 @@ import TermsAndConditions from './components/TermsandConditions.jsx';
 import AdminAreas from './components/AdminAreas.jsx';
 import LoginChoice from './LoginPages.jsx';
 import AgentDashboard from './Agent.jsx';
+import CompanyDashboard from './Company.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -63,6 +64,8 @@ createRoot(document.getElementById('root')).render(
         <Route path="/login" element={<LoginChoice />} />
         <Route path="/agent" element={<AgentDashboard />} />
 
+
+        <Route path="/company" element={<CompanyDashboard />} />
 
 
 
