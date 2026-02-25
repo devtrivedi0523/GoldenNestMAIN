@@ -18,4 +18,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select u from User u left join fetch u.areas where u.email = :email")
     Optional<User> findByEmailWithAreas(@Param("email") String email);
 
+    
+    @Query("select u from User u left join fetch u.areas left join fetch u.company where u.email = :email")
+    Optional<User> findByEmailWithAreasAndCompany(@Param("email") String email);
+
+    @Query("select u from User u where upper(u.role) = 'AGENT' and u.company.id = :companyId")
+    List<User> findAgentsByCompanyId(@Param("companyId") Long companyId);
 }

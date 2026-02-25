@@ -63,8 +63,17 @@ public class Property {
     private String documents;
 
     // ✅ NEW: links to companies.id (nullable)
-    @Column(name = "company_id")
-    private Long companyId;
+ // remove this if present:
+ // @Column(name = "company_id")
+ // private Long companyId;
+
+ // ADD instead:
+ @ManyToOne(fetch = FetchType.LAZY)
+ @JoinColumn(name = "company_id")
+ private Company company;
+
+ public Company getCompany() { return company; }
+ public void setCompany(Company company) { this.company = company; }
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
@@ -76,6 +85,8 @@ public class Property {
 
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<PropertyImage> images = new ArrayList<>();
+
+	private Long companyId;
 
     public Property() {}
 
@@ -176,7 +187,7 @@ public class Property {
     public void setDocuments(String documents) { this.documents = documents; }
 
     // ✅ company id
-    public Long getCompanyId() { return companyId; }
+    public Long getCompanyId() { return getCompanyId(); }
     public void setCompanyId(Long companyId) { this.companyId = companyId; }
 
     public User getOwner() { return owner; }

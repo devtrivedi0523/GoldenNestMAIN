@@ -27,6 +27,10 @@ public class UserController {
      * Returns the currently logged-in user (from JWT) + assigned areas + companyId.
      * This is used by frontend to know role and (for AGENT/ADMIN) area assignment.
      */
+    /**
+     * Returns the currently logged-in user (from JWT) + assigned areas + companyId.
+     * This is used by frontend to know role and (for AGENT/ADMIN) area assignment.
+     */
     @GetMapping("/me")
     public MeDto me(Authentication authentication) {
         if (authentication == null
@@ -37,7 +41,7 @@ public class UserController {
 
         String email = authentication.getName(); // from JWT (username/email)
 
-        // ✅ IMPORTANT: fetch user WITH areas
+        // IMPORTANT: fetch user WITH areas (and company if possible)
         User u = users.findByEmailWithAreas(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
@@ -47,10 +51,27 @@ public class UserController {
         dto.setEmail(u.getEmail());
         dto.setRole(u.getRole());
 
-        // ✅ NEW: companyId
-        dto.setCompanyId(u.getCompanyId());
+        // SAFE: company may be either a relation or null. Read id defensively.
+        if (u.getCompany() != null) {
+            dto.setCompanyId(u.getCompany().getId());
+        } else {
+            // if you kept a primitive companyId on User instead (legacy), try that:
+            try {
+                // reflection fallback: only used if you didn't add getCompany()
+                // remove this block if you don't want reflection — normally not needed.
+                java.lang.reflect.Method m = u.getClass().getMethod("getCompanyId");
+                Object val = m.invoke(u);
+                if (val instanceof Number) {
+                    dto.setCompanyId(((Number) val).longValue());
+                }
+            } catch (NoSuchMethodException ignored) {
+                // nothing to do
+            } catch (Exception ex) {
+                // ignore reflection errors — we prefer explicit mapping
+            }
+        }
 
-        // ✅ include areas (safe mini DTO to avoid recursion issues)
+        // include areas (safe mini DTO to avoid recursion issues)
         List<AreaMini> areaList = new ArrayList<>();
         if (u.getAreas() != null) {
             areaList = u.getAreas().stream()
@@ -70,10 +91,10 @@ public class UserController {
         private String email;
         private String role;
 
-        // ✅ NEW: companyId
+        // NEW: companyId
         private Long companyId;
 
-        // ✅ assigned areas
+        // assigned areas
         private List<AreaMini> areas = new ArrayList<>();
 
         public MeDto() {}

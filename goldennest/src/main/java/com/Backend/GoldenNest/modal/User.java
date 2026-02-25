@@ -24,8 +24,13 @@ public class User {
     private String role = "USER";
 
     // ✅ NEW: links USER/AGENT/COMPANY to companies.id
-    @Column(name = "company_id")
-    private Long companyId;
+ // ✅ Company relationship
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    public Company getCompany() { return company; }
+    public void setCompany(Company company) { this.company = company; }
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<VisitRequest> visitRequests = new ArrayList<>();
@@ -68,8 +73,8 @@ public class User {
     public void setRole(String role) { this.role = role; }
 
     // ✅ company id
-    public Long getCompanyId() { return companyId; }
-    public void setCompanyId(Long companyId) { this.companyId = companyId; }
+//    public Long getCompanyId() { return companyId; }
+//    public void setCompanyId(Long companyId) { this.companyId = companyId; }
 
     public List<Property> getSavedProperties() { return savedProperties; }
     public void setSavedProperties(List<Property> savedProperties) { this.savedProperties = savedProperties; }
