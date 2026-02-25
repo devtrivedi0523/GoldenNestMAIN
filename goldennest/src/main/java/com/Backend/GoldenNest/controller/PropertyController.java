@@ -250,17 +250,19 @@ public class PropertyController {
         // ---- Role checks ----
         String role = current.getRole() == null ? "" : current.getRole().toUpperCase();
         boolean isAdmin = role.equals("ADMIN") || role.equals("SUPER_ADMIN");
+        boolean isCompany = role.equals("COMPANY");
         boolean isAgent = role.equals("AGENT");
         boolean isUser  = role.equals("USER");
 
-        if (!isAdmin && !isAgent && !isUser) {
+        if (!isAdmin && !isCompany && !isAgent && !isUser) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Role not allowed to create properties");
         }
 
-        // ---- Area handling (OPTIONAL for USER/ADMIN, REQUIRED for AGENT) ----
+        // ---- Area handling (optional for COMPANY/USER/ADMIN, required for AGENT if you want) ----
         Long areaId = dto.getAreaId();
 
         if (isAgent && areaId == null) {
+            // requirement: agent should specify an area (matches your earlier rules)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "areaId is required for AGENT");
         }
 
@@ -270,12 +272,17 @@ public class PropertyController {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid areaId"));
         }
 
-        // AGENT must be assigned to the area
+        // AGENT must be assigned to the area (if area check is enabled)
         if (isAgent) {
             boolean allowed = areaAccess.hasAccessToArea(current.getId(), areaId);
             if (!allowed) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this area");
             }
+        }
+
+        // COMPANY and AGENT must belong to a company (companyId on user)
+        if ((isCompany || isAgent) && current.getCompanyId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account has no company assigned");
         }
 
         // ---- Create property ----
@@ -318,13 +325,24 @@ public class PropertyController {
         }
         p.setType(typeValue);
 
-        // status rule
-        p.setStatus((isAdmin || isAgent) ? "APPROVED" : "PENDING");
+        // status rule:
+        // - ADMIN: auto APPROVED
+        // - COMPANY: auto APPROVED
+        // - AGENT: auto APPROVED (because belongs to company)
+        // - USER: PENDING
+        p.setStatus((isAdmin || isCompany || isAgent) ? "APPROVED" : "PENDING");
 
         p.setOwner(current);
 
-        // ✅ Area can be null for USER listings (or ADMIN if you want)
+        // Area may be null for USER/COMPANY/ADMIN; AGENT had earlier check
         p.setArea(area);
+
+        // Set companyId on property for COMPANY/AGENT so dashboard queries work
+        if (isCompany || isAgent) {
+            p.setCompanyId(current.getCompanyId());
+        } else {
+            // For ADMIN or USER we leave companyId null (or optionally allow dto to pass a companyId)
+        }
 
         // geocode if missing coords
         autoGeocodeIfMissing(p);
@@ -350,7 +368,7 @@ public class PropertyController {
         body.put("propertyStatus", saved.getStatus());
         return ResponseEntity.ok(body);
     }
-    
+
     // ----------- ADVANCED UPDATE -----------
     @PutMapping("/{id}/advanced")
     public ResponseEntity<Map<String, Object>> updateAdvanced(
@@ -363,19 +381,17 @@ public class PropertyController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
 
         // ✅ UPDATED ROLE LOGIC:
-        // - ADMIN/SUPER_ADMIN: can edit (still owner check below can be bypassed for admin)
-        // - AGENT: must have area access
-        // - USER: can edit only own property (owner check below)
         String role = current.getRole() == null ? "" : current.getRole().toUpperCase();
         boolean isAdmin = role.equals("ADMIN") || role.equals("SUPER_ADMIN");
         boolean isAgent = role.equals("AGENT");
+        boolean isCompany = role.equals("COMPANY");
         boolean isUser = role.equals("USER");
 
-        if (!isAdmin && !isAgent && !isUser) {
+        if (!isAdmin && !isAgent && !isCompany && !isUser) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Role not allowed");
         }
 
-        // Only AGENT must have area access
+        // Only AGENT must have area access (if area is set on property)
         if (isAgent) {
             if (p.getArea() == null) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Property has no area assigned");
@@ -464,7 +480,7 @@ public class PropertyController {
         });
     }
 
-    // ----------- MANAGER/ADMIN LIST (restricted by area) -----------
+    // ----------- MANAGER/ADMIN/CORP DASHBOARD -----------
     @GetMapping("/dashboard")
     public Page<PropertyCardDto> dashboardList(
             @RequestParam(defaultValue = "0") int page,
@@ -474,20 +490,49 @@ public class PropertyController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
+        String role = current.getRole() == null ? "" : current.getRole().toUpperCase();
+        boolean isAdmin = role.equals("ADMIN") || role.equals("SUPER_ADMIN");
+        boolean isCompany = role.equals("COMPANY");
+        boolean isAgent = role.equals("AGENT");
+
         // ADMIN sees everything (all statuses)
-        if ("ADMIN".equalsIgnoreCase(current.getRole()) || "SUPER_ADMIN".equalsIgnoreCase(current.getRole())) {
+        if (isAdmin) {
             Page<Property> pageData = properties.findAll(pageable);
             return pageData.map(this::toCardDtoWithStatus);
         }
 
-        // AGENT / manager: only properties in assigned areas
-        List<Long> areaIds = current.getAreas().stream().map(a -> a.getId()).toList();
-        if (areaIds.isEmpty()) {
-            return Page.empty(pageable);
+        // COMPANY sees properties for their company
+        if (isCompany) {
+            if (current.getCompanyId() == null) {
+                return Page.empty(pageable);
+            }
+            Page<Property> pageData = properties.findByCompanyId(current.getCompanyId(), pageable);
+            return pageData.map(this::toCardDtoWithStatus);
         }
 
-        Page<Property> pageData = properties.findByAreaIdIn(areaIds, pageable);
-        return pageData.map(this::toCardDtoWithStatus);
+        // AGENT: prefer filtering by company + areas.
+        if (isAgent) {
+            Long companyId = current.getCompanyId();
+            if (companyId == null) {
+                // agent without company — nothing to show
+                return Page.empty(pageable);
+            }
+
+            List<Long> areaIds = current.getAreas().stream().map(a -> a.getId()).toList();
+
+            Page<Property> pageData;
+            if (areaIds.isEmpty()) {
+                // If agent has no specific area assignment, show entire company properties
+                pageData = properties.findByCompanyId(companyId, pageable);
+            } else {
+                pageData = properties.findByCompanyIdAndAreaIdIn(companyId, areaIds, pageable);
+            }
+
+            return pageData.map(this::toCardDtoWithStatus);
+        }
+
+        // Default: other roles -> empty page
+        return Page.empty(pageable);
     }
 
     private PropertyCardDto toCardDtoWithStatus(Property p) {
@@ -531,7 +576,6 @@ public class PropertyController {
     }
 
     // ----------- GEO-CODING HELPER -----------
-
     /**
      * If property.lat / property.lng are null, use Google Geocoding API
      * to fetch coordinates from the address fields.

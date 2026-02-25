@@ -5,39 +5,28 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "property")
-
 public class Property {
-	
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
-	
-	private String title;
-	
-	@Column(columnDefinition = "text")
-	private String description;
-	
-	private BigDecimal price;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String title;
+
+    @Column(columnDefinition = "text")
+    private String description;
+
+    private BigDecimal price;
 
     private Integer bedrooms;
     private Integer bathrooms;
 
-    private String type;      
-    private String status;    
+    private String type;
+    private String status;
 
     private String address1;
     private String city;
@@ -47,262 +36,153 @@ public class Property {
     private Double lat;
     private Double lng;
     private Integer areaSqft;
-    
-    private String propertyType;   // Apartment, Villa, etc.
-    private String locationTag;    // Downtown, Suburbs, Beachfront, Hillside
-    private Integer yearBuilt;     // int build year
 
-    private String tenure;          // e.g. "Freehold", "Leasehold"
-    private LocalDate leaseStartDate;  // store as ISO string "YYYY-MM-DD"
-    private Integer leaseTermYears; // original lease length
+    private String propertyType;
+    private String locationTag;
+    private Integer yearBuilt;
+
+    private String tenure;
+    private LocalDate leaseStartDate;
+    private Integer leaseTermYears;
     private LocalDate leaseExpiryDate;
-    
+
     @Column(columnDefinition = "text")
     private String floorPlans;
 
-    public String getFloorPlans() {
-		return floorPlans;
-	}
-	public void setFloorPlans(String floorPlans) {
-		this.floorPlans = floorPlans;
-	}
-	public String getVirtualTours() {
-		return virtualTours;
-	}
-	public void setVirtualTours(String virtualTours) {
-		this.virtualTours = virtualTours;
-	}
-	public String getDocuments() {
-		return documents;
-	}
-	public void setDocuments(String documents) {
-		this.documents = documents;
-	}
-
-
-	@Column(columnDefinition = "text")
+    @Column(columnDefinition = "text")
     private String virtualTours;
 
     @Column(columnDefinition = "text")
     private String documents;
-    
- // Property.java
+
+    // ✅ NEW: links to companies.id (nullable)
+    @Column(name = "company_id")
+    private Long companyId;
+
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private User owner;
 
-    public User getOwner() { return owner; }
-    public void setOwner(User owner) { this.owner = owner; }
-    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "area_id")
     private Area area;
 
-
-    
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<PropertyImage> images = new ArrayList<>();
-    
+
     public Property() {}
-    	
-    	public Property(Long id, String title, String description, BigDecimal price, Integer bedrooms, Integer bathrooms,
-                String type, String status, String address1, String city, String state, String zip,
-                Double lat, Double lng, Integer areaSqft, List<PropertyImage> images) {
-    		
-    		this.id = id;
-            this.title = title;
-            this.description = description;
-            this.price = price;
-            this.bedrooms = bedrooms;
-            this.bathrooms = bathrooms;
-            this.type = type;
-            this.status = status;
-            this.address1 = address1;
-            this.city = city;
-            this.state = state;
-            this.zip = zip;
-            this.lat = lat;
-            this.lng = lng;
-            this.areaSqft = areaSqft;
-            this.images = images;	
-    	
+
+    public Property(Long id, String title, String description, BigDecimal price, Integer bedrooms, Integer bathrooms,
+                    String type, String status, String address1, String city, String state, String zip,
+                    Double lat, Double lng, Integer areaSqft, List<PropertyImage> images) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.price = price;
+        this.bedrooms = bedrooms;
+        this.bathrooms = bathrooms;
+        this.type = type;
+        this.status = status;
+        this.address1 = address1;
+        this.city = city;
+        this.state = state;
+        this.zip = zip;
+        this.lat = lat;
+        this.lng = lng;
+        this.areaSqft = areaSqft;
+        this.images = images;
     }
 
-	public Long getId() {
-		return id;
-	}
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-	public String getTitle() {
-		return title;
-	}
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-	public void setTitle(String title) {
-		this.title = title;
-	}
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
 
-	public String getDescription() {
-		return description;
-	}
+    public Integer getBedrooms() { return bedrooms; }
+    public void setBedrooms(Integer bedrooms) { this.bedrooms = bedrooms; }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public Integer getBathrooms() { return bathrooms; }
+    public void setBathrooms(Integer bathrooms) { this.bathrooms = bathrooms; }
 
-	public BigDecimal getPrice() {
-		return price;
-	}
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 
-	public void setPrice(BigDecimal price) {
-		this.price = price;
-	}
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-	public Integer getBedrooms() {
-		return bedrooms;
-	}
+    public String getAddress1() { return address1; }
+    public void setAddress1(String address1) { this.address1 = address1; }
 
-	public void setBedrooms(Integer bedrooms) {
-		this.bedrooms = bedrooms;
-	}
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
 
-	public Integer getBathrooms() {
-		return bathrooms;
-	}
+    public String getState() { return state; }
+    public void setState(String state) { this.state = state; }
 
-	public void setBathrooms(Integer bathrooms) {
-		this.bathrooms = bathrooms;
-	}
+    public String getZip() { return zip; }
+    public void setZip(String zip) { this.zip = zip; }
 
-	public String getType() {
-		return type;
-	}
+    public Double getLat() { return lat; }
+    public void setLat(Double lat) { this.lat = lat; }
 
-	public void setType(String type) {
-		this.type = type;
-	}
+    public Double getLng() { return lng; }
+    public void setLng(Double lng) { this.lng = lng; }
 
-	public String getStatus() {
-		return status;
-	}
+    public Integer getAreaSqft() { return areaSqft; }
+    public void setAreaSqft(Integer areaSqft) { this.areaSqft = areaSqft; }
 
-	public void setStatus(String status) {
-		this.status = status;
-	}
+    public String getPropertyType() { return propertyType; }
+    public void setPropertyType(String propertyType) { this.propertyType = propertyType; }
 
-	public String getAddress1() {
-		return address1;
-	}
+    public String getLocationTag() { return locationTag; }
+    public void setLocationTag(String locationTag) { this.locationTag = locationTag; }
 
-	public void setAddress1(String address1) {
-		this.address1 = address1;
-	}
+    public Integer getYearBuilt() { return yearBuilt; }
+    public void setYearBuilt(Integer yearBuilt) { this.yearBuilt = yearBuilt; }
 
-	public String getCity() {
-		return city;
-	}
+    public String getTenure() { return tenure; }
+    public void setTenure(String tenure) { this.tenure = tenure; }
 
-	public void setCity(String city) {
-		this.city = city;
-	}
+    public LocalDate getLeaseStartDate() { return leaseStartDate; }
+    public void setLeaseStartDate(LocalDate leaseStartDate) { this.leaseStartDate = leaseStartDate; }
 
-	public String getState() {
-		return state;
-	}
+    public Integer getLeaseTermYears() { return leaseTermYears; }
+    public void setLeaseTermYears(Integer leaseTermYears) { this.leaseTermYears = leaseTermYears; }
 
-	public void setState(String state) {
-		this.state = state;
-	}
+    public LocalDate getLeaseExpiryDate() { return leaseExpiryDate; }
+    public void setLeaseExpiryDate(LocalDate leaseExpiryDate) { this.leaseExpiryDate = leaseExpiryDate; }
 
-	public String getZip() {
-		return zip;
-	}
+    public String getFloorPlans() { return floorPlans; }
+    public void setFloorPlans(String floorPlans) { this.floorPlans = floorPlans; }
 
-	public void setZip(String zip) {
-		this.zip = zip;
-	}
+    public String getVirtualTours() { return virtualTours; }
+    public void setVirtualTours(String virtualTours) { this.virtualTours = virtualTours; }
 
-	public Double getLat() {
-		return lat;
-	}
+    public String getDocuments() { return documents; }
+    public void setDocuments(String documents) { this.documents = documents; }
 
-	public void setLat(Double lat) {
-		this.lat = lat;
-	}
+    // ✅ company id
+    public Long getCompanyId() { return companyId; }
+    public void setCompanyId(Long companyId) { this.companyId = companyId; }
 
-	public Double getLng() {
-		return lng;
-	}
+    public User getOwner() { return owner; }
+    public void setOwner(User owner) { this.owner = owner; }
 
-	public void setLng(Double lng) {
-		this.lng = lng;
-	}
+    public Area getArea() { return area; }
+    public void setArea(Area area) { this.area = area; }
 
-	public Integer getAreaSqft() {
-		return areaSqft;
-	}
+    public List<PropertyImage> getImages() { return images; }
+    public void setImages(List<PropertyImage> images) { this.images = images; }
 
-	public void setAreaSqft(Integer areaSqft) {
-		this.areaSqft = areaSqft;
-	}
-
-	public List<PropertyImage> getImages() {
-		return images;
-	}
-
-	public void setImages(List<PropertyImage> images) {
-		this.images = images;
-	}
-	
-	public String getPropertyType() { return propertyType; }
-	public void setPropertyType(String propertyType) { this.propertyType = propertyType; }
-
-	public String getLocationTag() { return locationTag; }
-	public void setLocationTag(String locationTag) { this.locationTag = locationTag; }
-
-	public Integer getYearBuilt() { return yearBuilt; }
-	public void setYearBuilt(Integer yearBuilt) { this.yearBuilt = yearBuilt; }
-
-    
-	@Override
-	public String toString() {
+    @Override
+    public String toString() {
         return "Property [id=" + id + ", title=" + title + ", price=" + price + ", city=" + city + ", state=" + state + "]";
-	
+    }
 }
-	public String getTenure() {
-		return tenure;
-	}
-	public void setTenure(String tenure) {
-		this.tenure = tenure;
-	}
-	public LocalDate getLeaseStartDate() {
-		return leaseStartDate;
-	}
-	public void setLeaseStartDate(LocalDate leaseStartDate) {
-		this.leaseStartDate = leaseStartDate;
-	}
-	public Integer getLeaseTermYears() {
-		return leaseTermYears;
-	}
-	public void setLeaseTermYears(Integer leaseTermYears) {
-		this.leaseTermYears = leaseTermYears;
-	}
-	public LocalDate getLeaseExpiryDate() {
-		return leaseExpiryDate;
-	}
-	public void setLeaseExpiryDate(LocalDate leaseExpiryDate) {
-		this.leaseExpiryDate = leaseExpiryDate;
-	}
-	
-	public Area getArea() {
-	    return area;
-	}
-
-	public void setArea(Area area) {
-	    this.area = area;
-	}
-
-}
-

@@ -16,11 +16,15 @@ public interface PropertyRepository extends JpaRepository<Property, Long>, JpaSp
     Page<Property> findByStatusAndCityContainingIgnoreCase(String status, String city, Pageable pageable);
 
     Page<Property> findByOwnerId(Long long1, Pageable pageable);
-    
+
     Page<Property> findByAreaIdIn(List<Long> areaIds, Pageable pageable);
 
-
     long countByStatus(String status);
+
+    // Company-aware queries
+    Page<Property> findByCompanyId(Long companyId, Pageable pageable);
+
+    Page<Property> findByCompanyIdAndAreaIdIn(Long companyId, List<Long> areaIds, Pageable pageable);
 
     // ---------------------------
     // Distinct suggestions queries

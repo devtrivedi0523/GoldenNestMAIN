@@ -1,6 +1,5 @@
 package com.Backend.GoldenNest.controller;
 
-import com.Backend.GoldenNest.modal.Area;
 import com.Backend.GoldenNest.modal.User;
 import com.Backend.GoldenNest.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +24,7 @@ public class UserController {
     }
 
     /**
-     * Returns the currently logged-in user (from JWT) + assigned areas.
+     * Returns the currently logged-in user (from JWT) + assigned areas + companyId.
      * This is used by frontend to know role and (for AGENT/ADMIN) area assignment.
      */
     @GetMapping("/me")
@@ -48,6 +47,9 @@ public class UserController {
         dto.setEmail(u.getEmail());
         dto.setRole(u.getRole());
 
+        // ✅ NEW: companyId
+        dto.setCompanyId(u.getCompanyId());
+
         // ✅ include areas (safe mini DTO to avoid recursion issues)
         List<AreaMini> areaList = new ArrayList<>();
         if (u.getAreas() != null) {
@@ -68,7 +70,10 @@ public class UserController {
         private String email;
         private String role;
 
-        // ✅ NEW: assigned areas
+        // ✅ NEW: companyId
+        private Long companyId;
+
+        // ✅ assigned areas
         private List<AreaMini> areas = new ArrayList<>();
 
         public MeDto() {}
@@ -84,6 +89,9 @@ public class UserController {
 
         public String getRole() { return role; }
         public void setRole(String role) { this.role = role; }
+
+        public Long getCompanyId() { return companyId; }
+        public void setCompanyId(Long companyId) { this.companyId = companyId; }
 
         public List<AreaMini> getAreas() { return areas; }
         public void setAreas(List<AreaMini> areas) {

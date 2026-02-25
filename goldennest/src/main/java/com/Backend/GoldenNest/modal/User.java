@@ -19,12 +19,18 @@ public class User {
 
     private String name;
     private String phone;
-    private String role = "USER"; // USER / AGENT / ADMIN / AREA_MANAGER / SUPER_ADMIN
+
+    // USER / AGENT / COMPANY / ADMIN / SUPER_ADMIN
+    private String role = "USER";
+
+    // ✅ NEW: links USER/AGENT/COMPANY to companies.id
+    @Column(name = "company_id")
+    private Long companyId;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<VisitRequest> visitRequests = new ArrayList<>();
 
-    // Optional: favorites or saved properties
+    // favorites / saved properties
     @ManyToMany
     @JoinTable(
         name = "favorite",
@@ -33,7 +39,7 @@ public class User {
     )
     private List<Property> savedProperties = new ArrayList<>();
 
-    // NEW: manager <-> area mapping
+    // agent <-> area mapping
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "user_areas",
@@ -61,13 +67,16 @@ public class User {
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 
+    // ✅ company id
+    public Long getCompanyId() { return companyId; }
+    public void setCompanyId(Long companyId) { this.companyId = companyId; }
+
     public List<Property> getSavedProperties() { return savedProperties; }
     public void setSavedProperties(List<Property> savedProperties) { this.savedProperties = savedProperties; }
 
     public List<VisitRequest> getVisitRequests() { return visitRequests; }
     public void setVisitRequests(List<VisitRequest> visitRequests) { this.visitRequests = visitRequests; }
 
-    // NEW getters/setters for areas
     public Set<Area> getAreas() { return areas; }
     public void setAreas(Set<Area> areas) { this.areas = areas; }
 
