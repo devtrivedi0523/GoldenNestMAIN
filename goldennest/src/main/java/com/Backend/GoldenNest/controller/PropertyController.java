@@ -513,4 +513,47 @@ public class PropertyController {
         return properties.findByOwnerId(current.getId(), pageable)
                          .map(this::toCardDtoWithStatus);
     }
+    
+    @PutMapping("/{id}/advanced")
+    public ResponseEntity<Map<String, Object>> updateAdvanced(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> dto
+    ) {
+        User current = getCurrentUser();
+
+        Property p = properties.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
+
+        // Only owner, admin, or assigned agent can update
+        String role = (current.getRole() == null ? "" : current.getRole().toUpperCase());
+        boolean isAdmin = role.equals("ADMIN") || role.equals("SUPER_ADMIN");
+        boolean isOwner = p.getOwner() != null && p.getOwner().getId().equals(current.getId());
+        boolean isAssigned = p.getAssignedAgent() != null && p.getAssignedAgent().getId().equals(current.getId());
+
+        if (!isAdmin && !isOwner && !isAssigned) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to update this property");
+        }
+
+        if (dto.containsKey("tenure")) p.setTenure((String) dto.get("tenure"));
+        if (dto.containsKey("leaseStartDate") && dto.get("leaseStartDate") != null)
+            p.setLeaseStartDate(java.time.LocalDate.parse((String) dto.get("leaseStartDate")));
+        if (dto.containsKey("leaseTermYears") && dto.get("leaseTermYears") != null)
+            p.setLeaseTermYears(((Number) dto.get("leaseTermYears")).intValue());
+        if (dto.containsKey("leaseExpiryDate") && dto.get("leaseExpiryDate") != null)
+            p.setLeaseExpiryDate(java.time.LocalDate.parse((String) dto.get("leaseExpiryDate")));
+
+        if (dto.containsKey("floorPlans"))
+            p.setFloorPlans(joinCsv((List<String>) dto.get("floorPlans")));
+        if (dto.containsKey("virtualTours"))
+            p.setVirtualTours(joinCsv((List<String>) dto.get("virtualTours")));
+        if (dto.containsKey("documents"))
+            p.setDocuments(joinCsv((List<String>) dto.get("documents")));
+
+        properties.save(p);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("status", "ok");
+        body.put("id", p.getId());
+        return ResponseEntity.ok(body);
+    }
 }
