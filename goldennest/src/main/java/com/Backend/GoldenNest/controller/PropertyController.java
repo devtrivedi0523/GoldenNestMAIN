@@ -394,7 +394,7 @@ public class PropertyController {
             if (c == null) return Page.empty(pageable);
 
             Page<Property> pageData = (statusFilter == null)
-                    ? properties.findByCompanyId(c.getId(), pageable)
+                    ? properties.findByCompany_Id(c.getId(), pageable)
                     : properties.findByAssignedAgent_IdAndStatus(c.getId(), statusFilter, pageable);
 
             return pageData.map(this::toCardDtoWithStatus);
@@ -501,5 +501,16 @@ public class PropertyController {
             p.setLat(location.path("lat").asDouble());
             p.setLng(location.path("lng").asDouble());
         } catch (Exception ignored) {}
+    }
+    
+    @GetMapping("/mine")
+    public Page<PropertyCardDto> mine(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        User current = getCurrentUser();
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        return properties.findByOwnerId(current.getId(), pageable)
+                         .map(this::toCardDtoWithStatus);
     }
 }

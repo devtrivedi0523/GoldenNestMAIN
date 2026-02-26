@@ -22,8 +22,8 @@ public interface PropertyRepository extends JpaRepository<Property, Long>, JpaSp
     long countByStatus(String status);
 
     // ✅ Company-aware queries (because Property has companyId, NOT company relation)
-    Page<Property> findByCompanyId(Long companyId, Pageable pageable);
-    Page<Property> findByCompanyIdAndStatus(Long companyId, String status, Pageable pageable);
+    Page<Property> findByCompany_Id(Long companyId, Pageable pageable);
+    Page<Property> findByCompany_IdAndStatus(Long companyId, String status, Pageable pageable);
 
     // ✅ Agent assignment queries
     Page<Property> findByAssignedAgent_Id(Long agentId, Pageable pageable);
