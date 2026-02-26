@@ -395,7 +395,7 @@ public class PropertyController {
 
             Page<Property> pageData = (statusFilter == null)
                     ? properties.findByCompany_Id(c.getId(), pageable)
-                    : properties.findByAssignedAgent_IdAndStatus(c.getId(), statusFilter, pageable);
+                    : properties.findByCompany_IdAndStatus(c.getId(), statusFilter, pageable);  // ← fixed
 
             return pageData.map(this::toCardDtoWithStatus);
         }
