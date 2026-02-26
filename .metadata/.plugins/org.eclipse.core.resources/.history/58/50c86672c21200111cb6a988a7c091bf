@@ -35,6 +35,6 @@ app.jwt.refresh-days=14
 # --- Google Maps ---
 google.maps.api.key=${GOOGLE_MAPS_API_KEY:AIzaSyAW2ihE-P89mPgHySqVbm4eLdp7cp6hKek}
 
-logging.level.org.springframework=ERROR
-logging.level.org.hibernate=ERROR
-spring.jpa.show-sql=false
+logging.level.org.springframework=DEBUG
+logging.level.org.hibernate=DEBUG
+spring.jpa.show-sql=true
