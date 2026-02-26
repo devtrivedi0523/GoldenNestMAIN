@@ -86,7 +86,6 @@ public class Property {
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<PropertyImage> images = new ArrayList<>();
 
-	private Long companyId;
 
     public Property() {}
 
@@ -187,8 +186,8 @@ public class Property {
     public void setDocuments(String documents) { this.documents = documents; }
 
     // ✅ company id
-    public Long getCompanyId() { return getCompanyId(); }
-    public void setCompanyId(Long companyId) { this.companyId = companyId; }
+    public Long getCompanyId() { return company != null ? company.getId() : null; }
+    
 
     public User getOwner() { return owner; }
     public void setOwner(User owner) { this.owner = owner; }
