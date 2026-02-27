@@ -146,7 +146,7 @@ export default function Hero({ initialLocation = "" }) {
 
   return (
     <section className="relative w-full h-[90vh]">
-      <img src="/christian-vasile-E_EDcwg8das-unsplash.jpg" alt="Property" className="w-full h-full object-cover" />
+      <img src="/fp.png" alt="Property" className="w-full h-full object-cover" />
 
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-xl p-8 w-[90%] max-w-3xl">
         <p className ="text-sm text-gray-500 mb-2">
@@ -156,7 +156,7 @@ export default function Hero({ initialLocation = "" }) {
         <h2 className="text-3xl md:text-4xl font-bold mb-6">Your Property, Our Priority.</h2>
 
         <div className="flex space-x-6 border-b border-gray-300 mb-4">
-          {["Rent", "Buy", "Sell"].map((tab) => (
+          {["Rent", "Buy"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}

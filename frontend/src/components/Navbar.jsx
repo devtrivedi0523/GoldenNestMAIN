@@ -14,30 +14,30 @@ const Navbar = () => {
                 </a>
 
                 {/* Center: Navigation Tabs */}
-                <div className="hidden md:flex gap-6 text-gray-600 font-medium">
-                    <a href="/" className="px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300">Home</a>
+                <div className="hidden md:flex gap-6 text-black font-medium">
+                    <a href="/" className="px-4 py-2 hover:bg-orange-200 hover:rounded-full hover:font-bold transition-all duration-300">Home</a>
                     <Link
                         to="/rent"
-                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> Rent
+                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full hover:font-bold transition-all duration-300'> Rent
                     </Link>
                     <Link
                         to="/buy"
-                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> Buy
+                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full hover:font-bold transition-all duration-300'> Buy
                     </Link>
 
                     <Link
                         to="/sell"
-                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> Sell 
+                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full hover:font-bold transition-all duration-300'> Sell 
                     </Link>
 
                     <Link
                         to="/aboutus"
-                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> About Us 
+                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full hover:font-bold transition-all duration-300'> About Us 
                     </Link>
 
                     <Link
                         to="/login"
-                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full transition-all duration-300'> Log In 
+                        className='px-4 py-2 hover:bg-orange-200 hover:rounded-full hover:font-bold transition-all duration-300'> Log In 
                     </Link>
 
                 </div>

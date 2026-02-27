@@ -7,6 +7,8 @@ import {
     FaHome,
     FaChevronLeft,
     FaChevronRight,
+    FaTag,
+    FaMapMarkerAlt,
 } from "react-icons/fa";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
@@ -103,15 +105,21 @@ export default function PropertyDetails() {
 
     // Build some “key features” bullets from the data we actually have
     const keyFeatures = [
-        property.bedrooms != null && property.bathrooms != null
-            ? `${property.bedrooms} bedroom, ${property.bathrooms} bathroom ${property.type ? property.type.toLowerCase() : "property"
-            }`
+        property.bedrooms != null
+            ? { icon: <FaBed className="text-[#F3B03E] text-xl" />, label: `${property.bedrooms} Bedroom${property.bedrooms !== 1 ? "s" : ""}` }
+            : null,
+        property.bathrooms != null
+            ? { icon: <FaBath className="text-[#F3B03E] text-xl" />, label: `${property.bathrooms} Bathroom${property.bathrooms !== 1 ? "s" : ""}` }
             : null,
         property.areaSqft != null
-            ? `Approx. ${property.areaSqft.toLocaleString()} sq ft of living space`
+            ? { icon: <FaHome className="text-[#F3B03E] text-xl" />, label: `${property.areaSqft.toLocaleString()} sq ft` }
             : null,
-        locationLine ? `Located in ${locationLine}` : null,
-        formattedPrice ? `Guide price of ${formattedPrice}` : null,
+        locationLine
+            ? { icon: <FaMapMarkerAlt className="text-[#F3B03E] text-xl" />, label: locationLine }
+            : null,
+        formattedPrice
+            ? { icon: <FaTag className="text-[#F3B03E] text-xl" />, label: `Guide price ${formattedPrice}` }
+            : null,
     ].filter(Boolean);
 
     // ⭐ Advanced arrays (from backend; default to empty)
@@ -261,11 +269,17 @@ export default function PropertyDetails() {
                                 <h2 className="text-lg font-semibold mb-2">Key Features</h2>
                                 <hr className="border-gray-200 mb-3" />
                                 {keyFeatures.length > 0 ? (
-                                    <ul className="list-disc pl-5 space-y-1 mb-6">
+                                    <div className="flex flex-wrap gap-4 mb-6">
                                         {keyFeatures.map((f, idx) => (
-                                            <li key={idx}>{f}</li>
+                                            <div
+                                                key={idx}
+                                                className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3"
+                                            >
+                                                {f.icon}
+                                                <span className="text-sm font-medium text-gray-800">{f.label}</span>
+                                            </div>
                                         ))}
-                                    </ul>
+                                    </div>
                                 ) : (
                                     <p className="mb-6 text-sm text-gray-600">
                                         Key features will appear here when added for this property.

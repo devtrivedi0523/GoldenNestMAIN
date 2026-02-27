@@ -9,7 +9,7 @@ const AboutUs = () => {
             {/* Top Image + Heading */}
             <div className="relative rounded-xl overflow-hidden shadow-lg">
                 <img
-                    src="/photo-1717167398817-121e3c283dbb.jpeg"
+                    src="/aboutus.png"
                     alt="About Us"
                     className="w-full h-auto object-cover"
                 />
