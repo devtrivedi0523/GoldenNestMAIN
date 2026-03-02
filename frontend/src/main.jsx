@@ -27,6 +27,7 @@ import AdminAreas from './components/AdminAreas.jsx';
 import LoginChoice from './LoginPages.jsx';
 import AgentDashboard from './Agent.jsx';
 import CompanyDashboard from './Company.jsx';
+import PropertyEnquiry from './components/PropertyEnquiry.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -55,6 +56,9 @@ createRoot(document.getElementById('root')).render(
         <Route path='/buy' element={<Buy />} />
         <Route path='/rent' element={<Rent />} />
         <Route path="buy/properties/:id" element={<PropertyDetails />} />
+        <Route path="/buy/properties/:id/enquire" element={<PropertyEnquiry />} />
+
+
         <Route path="/rent/properties/:id" element={<PropertyDetails />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/account/listings" element={<MyListings />} />
