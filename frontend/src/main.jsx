@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import './index.css';
 
 import App from './App.jsx';
@@ -29,10 +29,17 @@ import AgentDashboard from './Agent.jsx';
 import CompanyDashboard from './Company.jsx';
 import PropertyEnquiry from './components/PropertyEnquiry.jsx';
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <Router>
-      <Navbar />
+const NO_NAVBAR_ROUTES = ['/login', '/admin', '/agent', '/company'];
+
+function Layout() {
+  const location = useLocation();
+  const hideNavbar = NO_NAVBAR_ROUTES.some((path) =>
+    location.pathname === path || location.pathname.startsWith(path + '/')
+  );
+
+  return (
+    <>
+      {!hideNavbar && <Navbar />}
 
       <Routes>
         <Route
@@ -43,7 +50,6 @@ createRoot(document.getElementById('root')).render(
               <FeaturedProperties />
               <ContactUs />
               <Footer />
-
             </>
           }
         />
@@ -57,26 +63,23 @@ createRoot(document.getElementById('root')).render(
         <Route path='/rent' element={<Rent />} />
         <Route path="buy/properties/:id" element={<PropertyDetails />} />
         <Route path="/buy/properties/:id/enquire" element={<PropertyEnquiry />} />
-
-
         <Route path="/rent/properties/:id" element={<PropertyDetails />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/account/listings" element={<MyListings />} />
         <Route path='/terms' element={<TermsAndConditions />} />
         <Route path="/admin/areas" element={<AdminAreas />} />
-
         <Route path="/login" element={<LoginChoice />} />
         <Route path="/agent" element={<AgentDashboard />} />
-
-
         <Route path="/company" element={<CompanyDashboard />} />
-
-
-
-
-
       </Routes>
+    </>
+  );
+}
 
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <Router>
+      <Layout />
     </Router>
   </StrictMode>
 );

@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaChevronDown, FaChevronRight, FaSearch, FaHome } from "react-icons/fa";
-import { getAccessToken } from "./auth";
+import { getAccessToken, clearAccessToken } from "./auth";
 
 const API_BASE =
   import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
@@ -18,52 +18,16 @@ const Pill = ({ children }) => (
 const Donut = ({ value = 42 }) => {
   const R = 56;
   const C = 2 * Math.PI * R;
-  const seg = [0.7, 0.2, 0.1]; // just visual
+  const seg = [0.7, 0.2, 0.1];
   const gaps = 6;
   const dash = (p) => `${C * p - gaps} ${C}`;
   return (
     <div className="relative w-[150px] h-[150px]">
       <svg viewBox="0 0 150 150" className="rotate-[-90deg]">
-        <circle
-          cx="75"
-          cy="75"
-          r={R}
-          fill="none"
-          stroke="#f4f4f4"
-          strokeWidth="16"
-        />
-        <circle
-          cx="75"
-          cy="75"
-          r={R}
-          fill="none"
-          stroke="#F3B03E"
-          strokeWidth="16"
-          strokeLinecap="round"
-          strokeDasharray={dash(seg[0])}
-        />
-        <circle
-          cx="75"
-          cy="75"
-          r={R}
-          fill="none"
-          stroke="#2e2e2e"
-          strokeWidth="16"
-          strokeLinecap="round"
-          strokeDasharray={dash(seg[1])}
-          transform={`rotate(${seg[0] * 360} 75 75)`}
-        />
-        <circle
-          cx="75"
-          cy="75"
-          r={R}
-          fill="none"
-          stroke="#f0d7a3"
-          strokeWidth="16"
-          strokeLinecap="round"
-          strokeDasharray={dash(seg[2])}
-          transform={`rotate(${(seg[0] + seg[1]) * 360} 75 75)`}
-        />
+        <circle cx="75" cy="75" r={R} fill="none" stroke="#f4f4f4" strokeWidth="16" />
+        <circle cx="75" cy="75" r={R} fill="none" stroke="#F3B03E" strokeWidth="16" strokeLinecap="round" strokeDasharray={dash(seg[0])} />
+        <circle cx="75" cy="75" r={R} fill="none" stroke="#2e2e2e" strokeWidth="16" strokeLinecap="round" strokeDasharray={dash(seg[1])} transform={`rotate(${seg[0] * 360} 75 75)`} />
+        <circle cx="75" cy="75" r={R} fill="none" stroke="#f0d7a3" strokeWidth="16" strokeLinecap="round" strokeDasharray={dash(seg[2])} transform={`rotate(${(seg[0] + seg[1]) * 360} 75 75)`} />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-4xl font-semibold">{value}</div>
@@ -79,7 +43,6 @@ const LeftStat = ({ label, value }) => (
   </div>
 );
 
-/* 💷 shared price formatter */
 const formatPrice = (value) => {
   if (value == null) return "Price on request";
   const n = Number(value);
@@ -130,9 +93,7 @@ const Sidebar = () => {
         </button>
         {openTxn && (
           <ul className="pl-3 text-sm text-gray-700 space-y-2">
-            <li className="px-2 text-gray-400">
-              Earnings & Commission (future)
-            </li>
+            <li className="px-2 text-gray-400">Earnings & Commission (future)</li>
             <li className="px-2 text-gray-400">Pending payouts (future)</li>
           </ul>
         )}
@@ -143,24 +104,11 @@ const Sidebar = () => {
 
 /* ---------- listing card ---------- */
 
-const ListingCard = ({
-  p,
-  primaryLabel,
-  secondaryLabel,
-  onPrimary,
-  onSecondary,
-  onView,
-}) => {
+const ListingCard = ({ p, primaryLabel, secondaryLabel, onPrimary, onSecondary, onView }) => {
   const img = p.coverImageUrl || "/placeholder.jpg";
   const location = [p.city, p.state].filter(Boolean).join(", ");
-
   const displayName = p.ownerName || p.ownerEmail || "Unknown seller";
-  const initials = displayName
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = displayName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
 
   return (
     <div className="bg-white border rounded-xl overflow-hidden">
@@ -176,33 +124,21 @@ const ListingCard = ({
             </div>
             <div className="flex flex-col">
               <span className="text-xs text-gray-500">Listed by</span>
-              <span className="text-xs font-medium text-gray-900">
-                {p.ownerName || "Unknown seller"}
-              </span>
-              {p.ownerEmail && (
-                <span className="text-[11px] text-gray-500">{p.ownerEmail}</span>
-              )}
+              <span className="text-xs font-medium text-gray-900">{p.ownerName || "Unknown seller"}</span>
+              {p.ownerEmail && <span className="text-[11px] text-gray-500">{p.ownerEmail}</span>}
             </div>
           </div>
         )}
 
         <div className="mt-3 flex flex-wrap gap-2">
-          {location && (
-            <Pill>
-              <FaHome />
-              {location}
-            </Pill>
-          )}
+          {location && <Pill><FaHome />{location}</Pill>}
         </div>
 
         <div className="mt-4">
           <div className="text-xs text-gray-500">Price</div>
           <div className="flex items-center gap-2">
             <div className="font-semibold">{formatPrice(p.price)}</div>
-            <button
-              className="ml-auto bg-[#F3B03E] hover:bg-[#e3a12f] text-black text-xs font-medium px-4 py-2 rounded-md"
-              onClick={onView}
-            >
+            <button className="ml-auto bg-[#F3B03E] hover:bg-[#e3a12f] text-black text-xs font-medium px-4 py-2 rounded-md" onClick={onView}>
               View Property Details
             </button>
           </div>
@@ -210,18 +146,12 @@ const ListingCard = ({
 
         <div className="mt-3 flex gap-2">
           {primaryLabel && (
-            <button
-              className="px-3 py-1 rounded-md text-xs border hover:bg-green-200"
-              onClick={onPrimary}
-            >
+            <button className="px-3 py-1 rounded-md text-xs border hover:bg-green-200" onClick={onPrimary}>
               {primaryLabel}
             </button>
           )}
           {secondaryLabel && (
-            <button
-              className="px-3 py-1 rounded-md text-xs border hover:bg-red-200"
-              onClick={onSecondary}
-            >
+            <button className="px-3 py-1 rounded-md text-xs border hover:bg-red-200" onClick={onSecondary}>
               {secondaryLabel}
             </button>
           )}
@@ -237,20 +167,13 @@ const ConfirmBar = ({ actionLabel, onCancel, onConfirm }) => (
   <div className="fixed left-1/2 -translate-x-1/2 bottom-8 z-50">
     <div className="bg-amber-400 text-black rounded-xl shadow-lg px-6 py-4 w-[520px] max-w-[92vw]">
       <div className="text-sm">
-        Are you sure you want to {actionLabel}? Once confirmed, the status will
-        be updated.
+        Are you sure you want to {actionLabel}? Once confirmed, the status will be updated.
       </div>
       <div className="mt-3 flex gap-2 justify-end">
-        <button
-          onClick={onCancel}
-          className="px-3 py-2 rounded-md border border-black/20 hover:bg-black/5"
-        >
+        <button onClick={onCancel} className="px-3 py-2 rounded-md border border-black/20 hover:bg-black/5">
           Cancel
         </button>
-        <button
-          onClick={onConfirm}
-          className="px-3 py-2 rounded-md text-white bg-black hover:bg-black/90"
-        >
+        <button onClick={onConfirm} className="px-3 py-2 rounded-md text-white bg-black hover:bg-black/90">
           {actionLabel}
         </button>
       </div>
@@ -268,18 +191,11 @@ const Tabs = ({ active, counts, onChange }) => {
         onClick={() => onChange(key)}
         className={
           "relative px-4 py-2 rounded-full text-sm font-medium transition " +
-          (is
-            ? "bg-[#F3B03E] text-black"
-            : "bg-white border hover:bg-black/5 text-black")
+          (is ? "bg-[#F3B03E] text-black" : "bg-white border hover:bg-black/5 text-black")
         }
       >
         {label}
-        <span
-          className={
-            "ml-2 inline-flex items-center justify-center text-xs rounded-full px-2 py-0.5 " +
-            (is ? "bg-white/20" : "bg-black/10")
-          }
-        >
+        <span className={"ml-2 inline-flex items-center justify-center text-xs rounded-full px-2 py-0.5 " + (is ? "bg-white/20" : "bg-black/10")}>
           {counts[key] ?? 0}
         </span>
       </button>
@@ -301,54 +217,34 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
 
   const [tab, setTab] = useState("pending");
-  const [lists, setLists] = useState({
-    pending: [],
-    approved: [],
-    rejected: [],
-  });
-  const [summary, setSummary] = useState({
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-    total: 0,
-  });
+  const [lists, setLists] = useState({ pending: [], approved: [], rejected: [] });
+  const [summary, setSummary] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [confirm, setConfirm] = useState(null); // { id, next }
+  const [confirm, setConfirm] = useState(null);
 
-  // ✅ token header (NO UI change)
   const token = getAccessToken();
-  const authHeaders = useMemo(
-    () => (token ? { Authorization: `Bearer ${token}` } : {}),
-    [token]
-  );
+  const authHeaders = useMemo(() => (token ? { Authorization: `Bearer ${token}` } : {}), [token]);
 
-  const counts = {
-    pending: summary.pending,
-    approved: summary.approved,
-    rejected: summary.rejected,
-  };
+  const counts = { pending: summary.pending, approved: summary.approved, rejected: summary.rejected };
 
   const labelFor = (next) =>
-    next === "approved"
-      ? "Approve this listing"
-      : next === "rejected"
-      ? "Decline this listing"
-      : "move this listing back to pending";
+    next === "approved" ? "Approve this listing" : next === "rejected" ? "Decline this listing" : "move this listing back to pending";
 
-  // ✅ Uses the working admin summary endpoint
+  const handleLogout = () => {
+    clearAccessToken();
+    navigate("/login", { replace: true });
+  };
+
   const loadSummary = async () => {
     try {
       if (!token) return;
-
       const res = await fetch(`${API_BASE}/api/admin/properties/summary`, {
         headers: { ...authHeaders },
         credentials: "include",
       });
-
       if (!res.ok) throw new Error(`Summary load failed (${res.status})`);
       const data = await res.json();
-
       setSummary({
         pending: data.pending ?? 0,
         approved: data.approved ?? 0,
@@ -360,41 +256,25 @@ export default function AdminDashboard() {
     }
   };
 
-  // ✅ List endpoint WITH auth headers (fixes 403)
   const loadList = async (statusKey) => {
-    const statusParam = statusKey.toUpperCase(); // PENDING / APPROVED / REJECTED
+    const statusParam = statusKey.toUpperCase();
     setLoading(true);
     setError("");
-
     try {
       if (!token) {
         setError("Please login as admin first.");
         setLists((prev) => ({ ...prev, [statusKey]: [] }));
         return;
       }
-
       const res = await fetch(
         `${API_BASE}/api/admin/properties?status=${statusParam}&page=0&size=50`,
-        {
-          headers: { ...authHeaders },
-          credentials: "include",
-        }
+        { headers: { ...authHeaders }, credentials: "include" }
       );
-
       if (!res.ok) throw new Error(`Failed to load ${statusKey} (${res.status})`);
       const data = await res.json();
-
       const content = data.content || [];
-
-      // ✅ Frontend safety filter (fixes "approved showing in pending")
-      const filtered = content.filter(
-        (p) => String(p.status || "").toUpperCase() === statusParam
-      );
-
-      setLists((prev) => ({
-        ...prev,
-        [statusKey]: filtered,
-      }));
+      const filtered = content.filter((p) => String(p.status || "").toUpperCase() === statusParam);
+      setLists((prev) => ({ ...prev, [statusKey]: filtered }));
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to load listings");
@@ -403,37 +283,28 @@ export default function AdminDashboard() {
     }
   };
 
-  // load summary + current tab list
   useEffect(() => {
     loadSummary();
     loadList(tab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, token]);
 
-  // keep approve/decline endpoints as-is (admin endpoints) + include auth header
   const doConfirm = async () => {
     if (!confirm) return;
     const { id, next } = confirm;
     setConfirm(null);
-
     try {
-      if (!token) {
-        alert("Please login as admin first.");
-        return;
-      }
-
+      if (!token) { alert("Please login as admin first."); return; }
       const res = await fetch(`${API_BASE}/api/admin/properties/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ status: next.toUpperCase() }),
         credentials: "include",
       });
-
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
         throw new Error(`Failed to update (${res.status}): ${txt}`);
       }
-
       await loadSummary();
       await loadList("pending");
       await loadList("approved");
@@ -453,42 +324,27 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {items.map((p) => {
           const onView = () => navigate(`/buy/properties/${p.id}`);
-
           if (mode === "pending") {
             return (
-              <ListingCard
-                key={p.id}
-                p={p}
-                onView={onView}
-                primaryLabel="Approve"
-                secondaryLabel="Decline"
+              <ListingCard key={p.id} p={p} onView={onView}
+                primaryLabel="Approve" secondaryLabel="Decline"
                 onPrimary={() => setConfirm({ id: p.id, next: "approved" })}
                 onSecondary={() => setConfirm({ id: p.id, next: "rejected" })}
               />
             );
           }
-
           if (mode === "approved") {
             return (
-              <ListingCard
-                key={p.id}
-                p={p}
-                onView={onView}
-                primaryLabel="Unpublish (Pending)"
-                secondaryLabel="Decline"
+              <ListingCard key={p.id} p={p} onView={onView}
+                primaryLabel="Unpublish (Pending)" secondaryLabel="Decline"
                 onPrimary={() => setConfirm({ id: p.id, next: "pending" })}
                 onSecondary={() => setConfirm({ id: p.id, next: "rejected" })}
               />
             );
           }
-
           return (
-            <ListingCard
-              key={p.id}
-              p={p}
-              onView={onView}
-              primaryLabel="Reconsider (Pending)"
-              secondaryLabel="Approve"
+            <ListingCard key={p.id} p={p} onView={onView}
+              primaryLabel="Reconsider (Pending)" secondaryLabel="Approve"
               onPrimary={() => setConfirm({ id: p.id, next: "pending" })}
               onSecondary={() => setConfirm({ id: p.id, next: "approved" })}
             />
@@ -515,15 +371,23 @@ export default function AdminDashboard() {
               />
             </div>
           </div>
+
+          {/* Logout button */}
+          <button
+            onClick={handleLogout}
+            className="ml-4 inline-flex items-center gap-2 text-sm px-4 py-2 rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition"
+          >
+            <span className="h-6 w-6 rounded-full bg-[#F3B03E] text-white flex items-center justify-center text-[11px]">✕</span>
+            <span className="hidden sm:inline">Log out</span>
+          </button>
         </div>
 
         <div className="px-6 md:px-10 lg:px-16">
-          {/* header */}
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold">Hello, Admin</h1>
               <p className="mt-2 text-gray-700">
-                Let’s get started – review submissions and manage property listings.
+                Let's get started – review submissions and manage property listings.
               </p>
             </div>
           </div>
@@ -552,12 +416,8 @@ export default function AdminDashboard() {
             </div>
 
             <div className="mt-6">
-              {loading && (
-                <div className="py-10 text-center text-gray-500">Loading listings…</div>
-              )}
-              {error && !loading && (
-                <div className="py-4 text-center text-red-600">{error}</div>
-              )}
+              {loading && <div className="py-10 text-center text-gray-500">Loading listings…</div>}
+              {error && !loading && <div className="py-4 text-center text-red-600">{error}</div>}
               {!loading && !error && renderList(activeItems, tab)}
             </div>
 
@@ -566,7 +426,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* confirmation bar */}
       {confirm && (
         <ConfirmBar
           actionLabel={labelFor(confirm.next)}

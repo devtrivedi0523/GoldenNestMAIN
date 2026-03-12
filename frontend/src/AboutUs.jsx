@@ -37,8 +37,8 @@ const AboutUs = () => {
             </div>
 
             {/* Why Choose Us */}
-            <div className="px-6 md:px-16 py-16">
-                <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-start">
+            <div className="py-16">
+                <div className="max-w-7xl grid md:grid-cols-2 gap-12 items-start">
                     {/* Left: Title and paragraph */}
                     <div>
                         <h2 className="text-3xl md:text-4xl font-semibold mb-4">Why Choose Us</h2>

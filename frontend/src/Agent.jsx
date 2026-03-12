@@ -8,6 +8,7 @@ import {
   FaSearch,
   FaHome,
 } from "react-icons/fa";
+import { clearAccessToken } from "./auth";
 
 /* ---------- tiny UI helpers (same style as Admin) ---------- */
 
@@ -195,6 +196,11 @@ export default function AgentDashboard() {
     }
   }
 
+  const handleLogout = () => {
+      clearAccessToken();
+      navigate("/login", { replace: true });
+    };
+
   useEffect(() => {
     loadList(tab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -218,6 +224,14 @@ export default function AgentDashboard() {
               />
             </div>
           </div>
+
+          <button
+            onClick={handleLogout}
+            className="ml-4 inline-flex items-center gap-2 text-sm px-4 py-2 rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition"
+          >
+            <span className="h-6 w-6 rounded-full bg-[#F3B03E] text-white flex items-center justify-center text-[11px]">✕</span>
+            <span className="hidden sm:inline">Log out</span>
+          </button>
         </div>
 
         <div className="px-6 md:px-10 lg:px-16">
