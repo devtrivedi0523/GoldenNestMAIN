@@ -28,6 +28,7 @@ import LoginChoice from './LoginPages.jsx';
 import AgentDashboard from './Agent.jsx';
 import CompanyDashboard from './Company.jsx';
 import PropertyEnquiry from './components/PropertyEnquiry.jsx';
+import SigninPage from './SignIn.jsx';
 
 const NO_NAVBAR_ROUTES = ['/login', '/admin', '/agent', '/company'];
 
@@ -71,6 +72,7 @@ function Layout() {
         <Route path="/login" element={<LoginChoice />} />
         <Route path="/agent" element={<AgentDashboard />} />
         <Route path="/company" element={<CompanyDashboard />} />
+        <Route path="/signin" element={<SigninPage />} />
       </Routes>
     </>
   );
