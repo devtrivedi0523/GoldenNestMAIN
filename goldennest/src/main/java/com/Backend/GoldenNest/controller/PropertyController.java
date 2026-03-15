@@ -443,7 +443,7 @@ public class PropertyController {
         dto.declineReason = p.getDeclineReason(); // ← add this line
         return dto;
     }
-    }
+    
 
     private String joinCsv(List<String> list) {
         if (list == null || list.isEmpty()) return null;
