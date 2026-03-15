@@ -20,5 +20,7 @@ public class PropertyCardDto {
     public Long ownerId;
     public String ownerName;
     public String ownerEmail;
+    
+    public String declineReason;
 
 }

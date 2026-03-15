@@ -75,6 +75,13 @@ public class Property {
  public Company getCompany() { return company; }
  public void setCompany(Company company) { this.company = company; }
 
+ @Column(columnDefinition = "TEXT")
+ private String declineReason;
+
+ // getter + setter
+ public String getDeclineReason() { return declineReason; }
+ public void setDeclineReason(String declineReason) { this.declineReason = declineReason; }
+ 
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private User owner;

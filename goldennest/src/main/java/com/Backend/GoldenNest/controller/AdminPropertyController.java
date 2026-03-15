@@ -103,4 +103,21 @@ public class AdminPropertyController {
         res.put("status", p.getStatus());
         return ResponseEntity.ok(res);
     }
+    
+    // ---- Decline reason ----
+    @PostMapping("/{id}/decline-reason")
+    public ResponseEntity<?> setDeclineReason(
+            @PathVariable Long id,
+            @RequestBody Map<String, List<String>> body) {
+
+        Property property = properties.findById(id)  // ← use 'properties', not 'PropertyRepository'
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found: " + id));
+
+        List<String> reasons = body.getOrDefault("reasons", List.of());
+        String reasonText = String.join(", ", reasons);
+        property.setDeclineReason(reasonText);
+        properties.save(property);  // ← use 'properties', not 'PropertyRepository'
+
+        return ResponseEntity.ok().build();
+    }
 }
