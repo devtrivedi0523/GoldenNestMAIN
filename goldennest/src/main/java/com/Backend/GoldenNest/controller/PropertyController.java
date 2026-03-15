@@ -440,7 +440,9 @@ public class PropertyController {
     private PropertyCardDto toCardDtoWithStatus(Property p) {
         PropertyCardDto dto = toPublicCardDto(p);
         dto.status = p.getStatus();
+        dto.declineReason = p.getDeclineReason(); // ← add this line
         return dto;
+    }
     }
 
     private String joinCsv(List<String> list) {
