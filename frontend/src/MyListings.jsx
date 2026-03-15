@@ -108,6 +108,14 @@ const PropertyCard = ({ p, onView }) => {
           </div>
         )}
 
+        {/* Decline reason — only shown for rejected listings */}
+        {p.status === "REJECTED" && p.declineReason && (
+          <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+            <p className="text-xs font-semibold text-red-600 mb-1">Declined reason</p>
+            <p className="text-xs text-red-700">{p.declineReason}</p>
+          </div>
+        )}
+
         <div className="mt-4 flex items-center justify-between">
           <span className="text-xl font-bold text-gray-900">{formatPrice(p.price)}</span>
           <button

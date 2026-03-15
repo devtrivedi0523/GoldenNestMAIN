@@ -50,6 +50,61 @@ const formatPrice = (value) => {
   return `£${n.toLocaleString()}`;
 };
 
+/* ---------- Decline Reason Dialog ---------- */
+
+const DECLINE_REASONS = [
+  "Documents Issue",
+  "Incomplete Information",
+  "Property Not Eligible",
+  "Policy Violation",
+  "Other",
+];
+
+const DeclineDialog = ({ onCancel, onConfirm }) => {
+  const [selected, setSelected] = useState([]);
+
+  const toggle = (reason) =>
+    setSelected((prev) =>
+      prev.includes(reason) ? prev.filter((r) => r !== reason) : [...prev, reason]
+    );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
+
+      {/* Dialog card */}
+      <div className="relative bg-[#F3B03E] rounded-2xl shadow-2xl px-8 py-7 w-full max-w-md mx-4">
+        <p className="font-semibold text-gray-900 text-base mb-6">
+          Please select a reason for denying this property listing.
+        </p>
+
+        <div className="space-y-3.5 mb-8">
+          {DECLINE_REASONS.map((reason) => (
+            <label key={reason} className="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={selected.includes(reason)}
+                onChange={() => toggle(reason)}
+                className="w-4 h-4 rounded border-gray-600 accent-gray-900 cursor-pointer"
+              />
+              <span className="text-sm font-medium text-gray-900">{reason}</span>
+            </label>
+          ))}
+        </div>
+
+        <button
+          disabled={selected.length === 0}
+          onClick={() => onConfirm(selected)}
+          className="w-full bg-white text-gray-900 font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Decline Property
+        </button>
+      </div>
+    </div>
+  );
+};
+
 /* ---------- sidebar ---------- */
 
 const Sidebar = () => {
@@ -161,7 +216,7 @@ const ListingCard = ({ p, primaryLabel, secondaryLabel, onPrimary, onSecondary, 
   );
 };
 
-/* ---------- confirmation bar ---------- */
+/* ---------- confirmation bar (approve / move to pending) ---------- */
 
 const ConfirmBar = ({ actionLabel, onCancel, onConfirm }) => (
   <div className="fixed left-1/2 -translate-x-1/2 bottom-8 z-50">
@@ -181,7 +236,7 @@ const ConfirmBar = ({ actionLabel, onCancel, onConfirm }) => (
   </div>
 );
 
-/* ---------- tabs header ---------- */
+/* ---------- tabs ---------- */
 
 const Tabs = ({ active, counts, onChange }) => {
   const btn = (key, label) => {
@@ -221,15 +276,15 @@ export default function AdminDashboard() {
   const [summary, setSummary] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [confirm, setConfirm] = useState(null);
+  const [confirm, setConfirm] = useState(null);       // { id, next } for non-decline
+  const [declinePending, setDeclinePending] = useState(null); // property id awaiting reason
 
   const token = getAccessToken();
   const authHeaders = useMemo(() => (token ? { Authorization: `Bearer ${token}` } : {}), [token]);
-
   const counts = { pending: summary.pending, approved: summary.approved, rejected: summary.rejected };
 
   const labelFor = (next) =>
-    next === "approved" ? "Approve this listing" : next === "rejected" ? "Decline this listing" : "move this listing back to pending";
+    next === "approved" ? "Approve this listing" : "move this listing back to pending";
 
   const handleLogout = () => {
     clearAccessToken();
@@ -240,20 +295,12 @@ export default function AdminDashboard() {
     try {
       if (!token) return;
       const res = await fetch(`${API_BASE}/api/admin/properties/summary`, {
-        headers: { ...authHeaders },
-        credentials: "include",
+        headers: { ...authHeaders }, credentials: "include",
       });
       if (!res.ok) throw new Error(`Summary load failed (${res.status})`);
       const data = await res.json();
-      setSummary({
-        pending: data.pending ?? 0,
-        approved: data.approved ?? 0,
-        rejected: data.rejected ?? 0,
-        total: data.total ?? 0,
-      });
-    } catch (err) {
-      console.error(err);
-    }
+      setSummary({ pending: data.pending ?? 0, approved: data.approved ?? 0, rejected: data.rejected ?? 0, total: data.total ?? 0 });
+    } catch (err) { console.error(err); }
   };
 
   const loadList = async (statusKey) => {
@@ -261,15 +308,10 @@ export default function AdminDashboard() {
     setLoading(true);
     setError("");
     try {
-      if (!token) {
-        setError("Please login as admin first.");
-        setLists((prev) => ({ ...prev, [statusKey]: [] }));
-        return;
-      }
-      const res = await fetch(
-        `${API_BASE}/api/admin/properties?status=${statusParam}&page=0&size=50`,
-        { headers: { ...authHeaders }, credentials: "include" }
-      );
+      if (!token) { setError("Please login as admin first."); setLists((prev) => ({ ...prev, [statusKey]: [] })); return; }
+      const res = await fetch(`${API_BASE}/api/admin/properties?status=${statusParam}&page=0&size=50`, {
+        headers: { ...authHeaders }, credentials: "include",
+      });
       if (!res.ok) throw new Error(`Failed to load ${statusKey} (${res.status})`);
       const data = await res.json();
       const content = data.content || [];
@@ -278,9 +320,7 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to load listings");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   useEffect(() => {
@@ -289,6 +329,14 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, token]);
 
+  const reloadAll = async () => {
+    await loadSummary();
+    await loadList("pending");
+    await loadList("approved");
+    await loadList("rejected");
+  };
+
+  // Non-decline actions (approve, move to pending)
   const doConfirm = async () => {
     if (!confirm) return;
     const { id, next } = confirm;
@@ -301,25 +349,47 @@ export default function AdminDashboard() {
         body: JSON.stringify({ status: next.toUpperCase() }),
         credentials: "include",
       });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`Failed to update (${res.status}): ${txt}`);
+      if (!res.ok) { const txt = await res.text().catch(() => ""); throw new Error(`Failed (${res.status}): ${txt}`); }
+      await reloadAll();
+    } catch (err) { console.error(err); alert("Failed to update: " + (err.message || "")); }
+  };
+
+  // Decline with reason
+  const doDeclineWithReason = async (reasons) => {
+    const id = declinePending;
+    setDeclinePending(null);
+    try {
+      if (!token) { alert("Please login as admin first."); return; }
+
+      // 1. Set status to REJECTED
+      const statusRes = await fetch(`${API_BASE}/api/admin/properties/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ status: "REJECTED" }),
+        credentials: "include",
+      });
+      if (!statusRes.ok) { const txt = await statusRes.text().catch(() => ""); throw new Error(`Reject failed (${statusRes.status}): ${txt}`); }
+
+      // 2. Send decline reasons to the property owner
+      const reasonRes = await fetch(`${API_BASE}/api/admin/properties/${id}/decline-reason`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ reasons }),
+        credentials: "include",
+      });
+      if (!reasonRes.ok) {
+        // Non-fatal: status was updated, just log the warning
+        console.warn(`Decline reason send failed (${reasonRes.status}) — status was still updated.`);
       }
-      await loadSummary();
-      await loadList("pending");
-      await loadList("approved");
-      await loadList("rejected");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update status: " + (err.message || ""));
-    }
+
+      await reloadAll();
+    } catch (err) { console.error(err); alert("Failed to decline: " + (err.message || "")); }
   };
 
   const activeItems = useMemo(() => lists[tab] || [], [lists, tab]);
 
   const renderList = (items, mode) => {
     if (items.length === 0) return <div className="text-gray-600">No listings here.</div>;
-
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {items.map((p) => {
@@ -329,7 +399,7 @@ export default function AdminDashboard() {
               <ListingCard key={p.id} p={p} onView={onView}
                 primaryLabel="Approve" secondaryLabel="Decline"
                 onPrimary={() => setConfirm({ id: p.id, next: "approved" })}
-                onSecondary={() => setConfirm({ id: p.id, next: "rejected" })}
+                onSecondary={() => setDeclinePending(p.id)}
               />
             );
           }
@@ -338,7 +408,7 @@ export default function AdminDashboard() {
               <ListingCard key={p.id} p={p} onView={onView}
                 primaryLabel="Unpublish (Pending)" secondaryLabel="Decline"
                 onPrimary={() => setConfirm({ id: p.id, next: "pending" })}
-                onSecondary={() => setConfirm({ id: p.id, next: "rejected" })}
+                onSecondary={() => setDeclinePending(p.id)}
               />
             );
           }
@@ -359,46 +429,29 @@ export default function AdminDashboard() {
       <Sidebar />
 
       <div className="flex-1">
-        {/* top bar */}
         <div className="flex items-center justify-between px-6 md:px-10 lg:px-16 py-4">
           <div className="flex-1 max-w-2xl">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                className="w-full rounded-full border px-10 py-2 bg-white"
-                placeholder="Search (future)"
-                disabled
-              />
+              <input className="w-full rounded-full border px-10 py-2 bg-white" placeholder="Search (future)" disabled />
             </div>
           </div>
-
-          {/* Logout button */}
-          <button
-            onClick={handleLogout}
-            className="ml-4 inline-flex items-center gap-2 text-sm px-4 py-2 rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition"
-          >
+          <button onClick={handleLogout} className="ml-4 inline-flex items-center gap-2 text-sm px-4 py-2 rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition">
             <span className="h-6 w-6 rounded-full bg-[#F3B03E] text-white flex items-center justify-center text-[11px]">✕</span>
             <span className="hidden sm:inline">Log out</span>
           </button>
         </div>
 
         <div className="px-6 md:px-10 lg:px-16">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold">Hello, Admin</h1>
-              <p className="mt-2 text-gray-700">
-                Let's get started – review submissions and manage property listings.
-              </p>
-            </div>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold">Hello, Admin</h1>
+            <p className="mt-2 text-gray-700">Let's get started – review submissions and manage property listings.</p>
           </div>
 
-          {/* stats */}
           <div className="mt-8">
             <div className="text-lg font-semibold tracking-wider">PROPERTIES</div>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
-              <div className="flex items-center gap-6">
-                <Donut value={summary.total} />
-              </div>
+              <div className="flex items-center gap-6"><Donut value={summary.total} /></div>
               <div className="max-w-xs space-y-3">
                 <LeftStat label="Total Listings" value={summary.total} />
                 <LeftStat label="Pending Property Approvals" value={summary.pending} />
@@ -408,29 +461,35 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* tabs + lists */}
           <div className="mt-10">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl md:text-3xl font-bold">Manage Listings</h2>
               <Tabs active={tab} counts={counts} onChange={setTab} />
             </div>
-
             <div className="mt-6">
               {loading && <div className="py-10 text-center text-gray-500">Loading listings…</div>}
               {error && !loading && <div className="py-4 text-center text-red-600">{error}</div>}
               {!loading && !error && renderList(activeItems, tab)}
             </div>
-
             <div className="h-20" />
           </div>
         </div>
       </div>
 
+      {/* Confirm bar for approve / pending actions */}
       {confirm && (
         <ConfirmBar
           actionLabel={labelFor(confirm.next)}
           onCancel={() => setConfirm(null)}
           onConfirm={doConfirm}
+        />
+      )}
+
+      {/* Decline reason dialog */}
+      {declinePending && (
+        <DeclineDialog
+          onCancel={() => setDeclinePending(null)}
+          onConfirm={doDeclineWithReason}
         />
       )}
     </div>

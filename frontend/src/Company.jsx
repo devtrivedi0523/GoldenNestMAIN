@@ -82,18 +82,11 @@ const Tabs = ({ active, counts, onChange }) => {
         onClick={() => onChange(key)}
         className={
           "relative px-4 py-2 rounded-full text-sm font-medium transition " +
-          (is
-            ? "bg-[#F3B03E] text-black"
-            : "bg-white border hover:bg-black/5 text-black")
+          (is ? "bg-[#F3B03E] text-black" : "bg-white border hover:bg-black/5 text-black")
         }
       >
         {label}
-        <span
-          className={
-            "ml-2 inline-flex items-center justify-center text-xs rounded-full px-2 py-0.5 " +
-            (is ? "bg-white/20" : "bg-black/10")
-          }
-        >
+        <span className={"ml-2 inline-flex items-center justify-center text-xs rounded-full px-2 py-0.5 " + (is ? "bg-white/20" : "bg-black/10")}>
           {counts[key] ?? 0}
         </span>
       </button>
@@ -117,15 +110,7 @@ function statusKeyToEnum(key) {
 
 /* ---------- Listing card with assign dropdown ---------- */
 
-const ListingCard = ({
-  p,
-  agents,
-  selectedAgentId,
-  onSelectAgent,
-  onAssignAgent,
-  assigning,
-  onView,
-}) => {
+const ListingCard = ({ p, agents, selectedAgentId, onSelectAgent, onAssignAgent, assigning, onView }) => {
   const img = p.coverImageUrl || "/placeholder.jpg";
   const location = [p.city, p.state].filter(Boolean).join(", ");
 
@@ -137,12 +122,7 @@ const ListingCard = ({
         {location && <p className="text-xs text-gray-600 mt-1">{location}</p>}
 
         <div className="mt-3 flex flex-wrap gap-2">
-          {location && (
-            <Pill>
-              <FaHome />
-              {location}
-            </Pill>
-          )}
+          {location && <Pill><FaHome />{location}</Pill>}
         </div>
 
         <div className="mt-4">
@@ -162,7 +142,15 @@ const ListingCard = ({
           Status: <span className="font-semibold">{p.status}</span>
         </div>
 
-        {/* ✅ Assign to Agent */}
+        {/* Decline reason — only shown for rejected listings */}
+        {p.status === "REJECTED" && p.declineReason && (
+          <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+            <p className="text-xs font-semibold text-red-600 mb-1">Declined reason</p>
+            <p className="text-xs text-red-700">{p.declineReason}</p>
+          </div>
+        )}
+
+        {/* Assign to Agent */}
         <div className="mt-4 border-t pt-4">
           <div className="text-xs text-gray-600 mb-2 font-medium">
             Assign this property to an Agent
@@ -204,19 +192,14 @@ export default function CompanyDashboard() {
   const navigate = useNavigate();
 
   const [me, setMe] = useState(null);
-
   const [tab, setTab] = useState("pending");
   const [lists, setLists] = useState({ pending: [], approved: [], rejected: [] });
-
   const [agents, setAgents] = useState([]);
-  const [selectedAgentByProperty, setSelectedAgentByProperty] = useState({}); // { [propertyId]: agentId }
-
+  const [selectedAgentByProperty, setSelectedAgentByProperty] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingMe, setLoadingMe] = useState(true);
   const [loadingAgents, setLoadingAgents] = useState(true);
-
   const [assigningPropertyId, setAssigningPropertyId] = useState(null);
-
   const [error, setError] = useState("");
 
   const counts = {
@@ -262,11 +245,7 @@ export default function CompanyDashboard() {
       const status = statusKeyToEnum(statusKey);
       const data = await apiFetch(`/api/properties/dashboard?status=${status}&page=0&size=50`);
       const content = data?.content || [];
-
-      const filtered = content.filter(
-        (p) => String(p.status || "").toUpperCase() === status
-      );
-
+      const filtered = content.filter((p) => String(p.status || "").toUpperCase() === status);
       setLists((prev) => ({ ...prev, [statusKey]: filtered }));
     } catch (e) {
       setError(e.message || "Failed to load company dashboard");
@@ -278,16 +257,10 @@ export default function CompanyDashboard() {
   async function assignAgent(propertyId) {
     const agentId = selectedAgentByProperty[propertyId];
     if (!agentId) return;
-
     setAssigningPropertyId(propertyId);
     setError("");
-
     try {
-      await apiFetch(`/api/properties/${propertyId}/assign-agent/${agentId}`, {
-        method: "PUT",
-      });
-
-      // refresh current tab list after assignment
+      await apiFetch(`/api/properties/${propertyId}/assign-agent/${agentId}`, { method: "PUT" });
       await loadList(tab);
     } catch (e) {
       setError(e.message || "Failed to assign agent");
@@ -308,7 +281,6 @@ export default function CompanyDashboard() {
   }, [tab]);
 
   const activeItems = useMemo(() => lists[tab] || [], [lists, tab]);
-
   const role = String(me?.role || "").toUpperCase();
   const companyId = me?.companyId ?? me?.company?.id ?? null;
 
@@ -321,11 +293,7 @@ export default function CompanyDashboard() {
           <div className="flex-1 max-w-2xl">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                className="w-full rounded-full border px-10 py-2 bg-white"
-                placeholder="Search (future)"
-                disabled
-              />
+              <input className="w-full rounded-full border px-10 py-2 bg-white" placeholder="Search (future)" disabled />
             </div>
           </div>
           <button
@@ -342,23 +310,11 @@ export default function CompanyDashboard() {
             <div>
               <h1 className="text-3xl md:text-4xl font-bold">
                 Hello{me?.email ? `, ${me.email}` : ""}{" "}
-                <span className="text-gray-500 text-lg font-medium">
-                  ({role || "COMPANY"})
-                </span>
+                <span className="text-gray-500 text-lg font-medium">({role || "COMPANY"})</span>
               </h1>
               <p className="mt-2 text-gray-700">All properties under your company appear here.</p>
-
-              {!loadingMe && (
-                <p className="mt-1 text-sm text-gray-600">
-                  Company ID: <b>{companyId ?? "Not set"}</b>
-                </p>
-              )}
-
-              {!loadingAgents && (
-                <p className="mt-1 text-sm text-gray-600">
-                  Agents found: <b>{agents.length}</b>
-                </p>
-              )}
+              {!loadingMe && <p className="mt-1 text-sm text-gray-600">Company ID: <b>{companyId ?? "Not set"}</b></p>}
+              {!loadingAgents && <p className="mt-1 text-sm text-gray-600">Agents found: <b>{agents.length}</b></p>}
             </div>
           </div>
 
@@ -373,9 +329,7 @@ export default function CompanyDashboard() {
 
           <div className="mt-6">
             {error && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm">
-                {error}
-              </div>
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm">{error}</div>
             )}
 
             <div className="flex items-center justify-between">
@@ -398,10 +352,7 @@ export default function CompanyDashboard() {
                         agents={agents}
                         selectedAgentId={selectedAgentByProperty[p.id] || ""}
                         onSelectAgent={(propertyId, agentId) =>
-                          setSelectedAgentByProperty((prev) => ({
-                            ...prev,
-                            [propertyId]: agentId,
-                          }))
+                          setSelectedAgentByProperty((prev) => ({ ...prev, [propertyId]: agentId }))
                         }
                         assigning={assigningPropertyId === p.id}
                         onAssignAgent={assignAgent}
