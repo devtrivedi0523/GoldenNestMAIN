@@ -133,14 +133,14 @@ const RentProperties = ({ filters = {} }) => {
                   {location && (
                     <p className="text-xs text-gray-500 mt-0.5">{location}</p>
                   )}
-                  {blurb && (
+                  {/* {blurb && (
                     <p className="text-sm text-gray-600 mt-2">
                       {blurb.length > 110 ? `${blurb.slice(0, 110)}…` : blurb}{" "}
                       <span className="text-black font-medium cursor-pointer">
                         Read More
                       </span>
                     </p>
-                  )}
+                  )} */}
 
                   {/* Tags from metrics */}
                   {tags.length > 0 && (

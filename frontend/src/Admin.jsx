@@ -70,15 +70,11 @@ const DeclineDialog = ({ onCancel, onConfirm }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
-
-      {/* Dialog card */}
       <div className="relative bg-[#F3B03E] rounded-2xl shadow-2xl px-8 py-7 w-full max-w-md mx-4">
         <p className="font-semibold text-gray-900 text-base mb-6">
           Please select a reason for denying this property listing.
         </p>
-
         <div className="space-y-3.5 mb-8">
           {DECLINE_REASONS.map((reason) => (
             <label key={reason} className="flex items-center gap-3 cursor-pointer group">
@@ -92,7 +88,6 @@ const DeclineDialog = ({ onCancel, onConfirm }) => {
             </label>
           ))}
         </div>
-
         <button
           disabled={selected.length === 0}
           onClick={() => onConfirm(selected)}
@@ -107,11 +102,18 @@ const DeclineDialog = ({ onCancel, onConfirm }) => {
 
 /* ---------- sidebar ---------- */
 
-const Sidebar = () => {
+const Sidebar = ({ activeTab, onTabChange }) => {
   const [openProp, setOpenProp] = useState(true);
   const [openTxn, setOpenTxn] = useState(false);
+
+  const propLinks = [
+    { label: "Pending Review", tab: "pending" },
+    { label: "Active Listings", tab: "approved" },
+    { label: "Rejected Listings", tab: "rejected" },
+  ];
+
   return (
-    <aside className="hidden lg:flex flex-col w-[220px] bg-white border rounded-2xl m-3 p-3">
+    <aside className="hidden lg:flex flex-col w-[220px] shrink-0 bg-white border rounded-2xl m-3 p-3 relative z-10">
       <div className="flex items-center gap-2 px-2 py-3">
         <img src="/1-2 1.png" alt="Golden Nest" />
       </div>
@@ -123,24 +125,39 @@ const Sidebar = () => {
 
       <div className="mt-4">
         <button
-          className="w-full flex items-center justify-between px-3 py-2 text-left text-sm font-medium"
+          type="button"
+          className="w-full flex items-center justify-between px-3 py-2 text-left text-sm font-medium cursor-pointer"
           onClick={() => setOpenProp((v) => !v)}
         >
           <span>Property Management</span>
           {openProp ? <FaChevronDown /> : <FaChevronRight />}
         </button>
         {openProp && (
-          <ul className="pl-3 text-sm text-gray-700 space-y-2">
-            <li className="px-2">Pending Review</li>
-            <li className="px-2">Active Listings</li>
-            <li className="px-2">Rejected Listings</li>
+          <ul className="pl-3 text-sm space-y-1">
+            {propLinks.map(({ label, tab }) => (
+              <li key={tab}>
+                <button
+                  type="button"
+                  onClick={() => onTabChange(tab)}
+                  className={
+                    "w-full text-left px-2 py-1.5 rounded-md transition cursor-pointer " +
+                    (activeTab === tab
+                      ? "bg-[#F3B03E]/40 font-semibold text-black"
+                      : "hover:bg-gray-100 text-gray-700")
+                  }
+                >
+                  {label}
+                </button>
+              </li>
+            ))}
           </ul>
         )}
       </div>
 
       <div className="mt-4">
         <button
-          className="w-full flex items-center justify-between px-3 py-2 text-left text-sm font-medium"
+          type="button"
+          className="w-full flex items-center justify-between px-3 py-2 text-left text-sm font-medium cursor-pointer"
           onClick={() => setOpenTxn((v) => !v)}
         >
           <span>Transactions</span>
@@ -193,7 +210,11 @@ const ListingCard = ({ p, primaryLabel, secondaryLabel, onPrimary, onSecondary, 
           <div className="text-xs text-gray-500">Price</div>
           <div className="flex items-center gap-2">
             <div className="font-semibold">{formatPrice(p.price)}</div>
-            <button className="ml-auto bg-[#F3B03E] hover:bg-[#e3a12f] text-black text-xs font-medium px-4 py-2 rounded-md" onClick={onView}>
+            <button
+              type="button"
+              className="ml-auto bg-[#F3B03E] hover:bg-[#e3a12f] text-black text-xs font-medium px-4 py-2 rounded-md"
+              onClick={onView}
+            >
               View Property Details
             </button>
           </div>
@@ -201,12 +222,12 @@ const ListingCard = ({ p, primaryLabel, secondaryLabel, onPrimary, onSecondary, 
 
         <div className="mt-3 flex gap-2">
           {primaryLabel && (
-            <button className="px-3 py-1 rounded-md text-xs border hover:bg-green-200" onClick={onPrimary}>
+            <button type="button" className="px-3 py-1 rounded-md text-xs border hover:bg-green-200" onClick={onPrimary}>
               {primaryLabel}
             </button>
           )}
           {secondaryLabel && (
-            <button className="px-3 py-1 rounded-md text-xs border hover:bg-red-200" onClick={onSecondary}>
+            <button type="button" className="px-3 py-1 rounded-md text-xs border hover:bg-red-200" onClick={onSecondary}>
               {secondaryLabel}
             </button>
           )}
@@ -216,7 +237,7 @@ const ListingCard = ({ p, primaryLabel, secondaryLabel, onPrimary, onSecondary, 
   );
 };
 
-/* ---------- confirmation bar (approve / move to pending) ---------- */
+/* ---------- confirmation bar ---------- */
 
 const ConfirmBar = ({ actionLabel, onCancel, onConfirm }) => (
   <div className="fixed left-1/2 -translate-x-1/2 bottom-8 z-50">
@@ -225,10 +246,10 @@ const ConfirmBar = ({ actionLabel, onCancel, onConfirm }) => (
         Are you sure you want to {actionLabel}? Once confirmed, the status will be updated.
       </div>
       <div className="mt-3 flex gap-2 justify-end">
-        <button onClick={onCancel} className="px-3 py-2 rounded-md border border-black/20 hover:bg-black/5">
+        <button type="button" onClick={onCancel} className="px-3 py-2 rounded-md border border-black/20 hover:bg-black/5">
           Cancel
         </button>
-        <button onClick={onConfirm} className="px-3 py-2 rounded-md text-white bg-black hover:bg-black/90">
+        <button type="button" onClick={onConfirm} className="px-3 py-2 rounded-md text-white bg-black hover:bg-black/90">
           {actionLabel}
         </button>
       </div>
@@ -243,6 +264,7 @@ const Tabs = ({ active, counts, onChange }) => {
     const is = active === key;
     return (
       <button
+        type="button"
         onClick={() => onChange(key)}
         className={
           "relative px-4 py-2 rounded-full text-sm font-medium transition " +
@@ -276,8 +298,8 @@ export default function AdminDashboard() {
   const [summary, setSummary] = useState({ pending: 0, approved: 0, rejected: 0, total: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [confirm, setConfirm] = useState(null);       // { id, next } for non-decline
-  const [declinePending, setDeclinePending] = useState(null); // property id awaiting reason
+  const [confirm, setConfirm] = useState(null);
+  const [declinePending, setDeclinePending] = useState(null);
 
   const token = getAccessToken();
   const authHeaders = useMemo(() => (token ? { Authorization: `Bearer ${token}` } : {}), [token]);
@@ -289,6 +311,11 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     clearAccessToken();
     navigate("/login", { replace: true });
+  };
+
+  // Single handler used by both Sidebar and Tabs
+  const handleTabChange = (newTab) => {
+    setTab(newTab);
   };
 
   const loadSummary = async () => {
@@ -336,7 +363,6 @@ export default function AdminDashboard() {
     await loadList("rejected");
   };
 
-  // Non-decline actions (approve, move to pending)
   const doConfirm = async () => {
     if (!confirm) return;
     const { id, next } = confirm;
@@ -354,14 +380,11 @@ export default function AdminDashboard() {
     } catch (err) { console.error(err); alert("Failed to update: " + (err.message || "")); }
   };
 
-  // Decline with reason
   const doDeclineWithReason = async (reasons) => {
     const id = declinePending;
     setDeclinePending(null);
     try {
       if (!token) { alert("Please login as admin first."); return; }
-
-      // 1. Set status to REJECTED
       const statusRes = await fetch(`${API_BASE}/api/admin/properties/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...authHeaders },
@@ -370,7 +393,6 @@ export default function AdminDashboard() {
       });
       if (!statusRes.ok) { const txt = await statusRes.text().catch(() => ""); throw new Error(`Reject failed (${statusRes.status}): ${txt}`); }
 
-      // 2. Send decline reasons to the property owner
       const reasonRes = await fetch(`${API_BASE}/api/admin/properties/${id}/decline-reason`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
@@ -378,7 +400,6 @@ export default function AdminDashboard() {
         credentials: "include",
       });
       if (!reasonRes.ok) {
-        // Non-fatal: status was updated, just log the warning
         console.warn(`Decline reason send failed (${reasonRes.status}) — status was still updated.`);
       }
 
@@ -426,9 +447,10 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-[#f7f6f3] flex">
-      <Sidebar />
+      <Sidebar activeTab={tab} onTabChange={handleTabChange} />
 
-      <div className="flex-1">
+      {/* min-w-0 prevents overflow that can block sidebar clicks */}
+      <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between px-6 md:px-10 lg:px-16 py-4">
           <div className="flex-1 max-w-2xl">
             <div className="relative">
@@ -436,7 +458,11 @@ export default function AdminDashboard() {
               <input className="w-full rounded-full border px-10 py-2 bg-white" placeholder="Search (future)" disabled />
             </div>
           </div>
-          <button onClick={handleLogout} className="ml-4 inline-flex items-center gap-2 text-sm px-4 py-2 rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="ml-4 inline-flex items-center gap-2 text-sm px-4 py-2 rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition"
+          >
             <span className="h-6 w-6 rounded-full bg-[#F3B03E] text-white flex items-center justify-center text-[11px]">✕</span>
             <span className="hidden sm:inline">Log out</span>
           </button>
@@ -464,7 +490,7 @@ export default function AdminDashboard() {
           <div className="mt-10">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl md:text-3xl font-bold">Manage Listings</h2>
-              <Tabs active={tab} counts={counts} onChange={setTab} />
+              <Tabs active={tab} counts={counts} onChange={handleTabChange} />
             </div>
             <div className="mt-6">
               {loading && <div className="py-10 text-center text-gray-500">Loading listings…</div>}
@@ -476,7 +502,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Confirm bar for approve / pending actions */}
       {confirm && (
         <ConfirmBar
           actionLabel={labelFor(confirm.next)}
@@ -485,7 +510,6 @@ export default function AdminDashboard() {
         />
       )}
 
-      {/* Decline reason dialog */}
       {declinePending && (
         <DeclineDialog
           onCancel={() => setDeclinePending(null)}

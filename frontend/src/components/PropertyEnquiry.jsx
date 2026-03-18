@@ -295,49 +295,6 @@ export default function PropertyEnquiry() {
                                     <p className="text-xs text-gray-400 mt-1">{form.message.length}/700 characters</p>
                                 </div>
 
-                                {/* Has property to sell */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">I have a property to sell</label>
-                                    <select
-                                        name="hasPropertyToSell"
-                                        value={form.hasPropertyToSell}
-                                        onChange={handleChange}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3B03E]/40 focus:border-[#F3B03E] bg-white"
-                                    >
-                                        <option value="">Please select</option>
-                                        <option value="Yes">Yes</option>
-                                        <option value="No">No</option>
-                                        <option value="Not sure">Not sure</option>
-                                    </select>
-                                </div>
-
-                                {/* Has property to let */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">I have a property to let</label>
-                                    <select
-                                        name="hasPropertyToLet"
-                                        value={form.hasPropertyToLet}
-                                        onChange={handleChange}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#F3B03E]/40 focus:border-[#F3B03E] bg-white"
-                                    >
-                                        <option value="">Please select</option>
-                                        <option value="Yes">Yes</option>
-                                        <option value="No">No</option>
-                                        <option value="Not sure">Not sure</option>
-                                    </select>
-                                </div>
-
-                                {/* Valuation checkbox */}
-                                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        name="wantsValuation"
-                                        checked={form.wantsValuation}
-                                        onChange={handleChange}
-                                        className="w-4 h-4 accent-[#F3B03E]"
-                                    />
-                                    I would like: My property valued
-                                </label>
 
                                 {/* Error */}
                                 {submitError && (

@@ -25,9 +25,16 @@ const formatPrice = (value) => {
   return `£${n.toLocaleString()}`;
 };
 
-const Sidebar = () => {
+const Sidebar = ({ activeTab, onTabChange }) => {
   const [openProp, setOpenProp] = useState(true);
   const [openTxn, setOpenTxn] = useState(false);
+
+  const propLinks = [
+    { label: "Pending Review", tab: "pending" },
+    { label: "Active Listings", tab: "approved" },
+    { label: "Rejected Listings", tab: "rejected" },
+  ];
+
   return (
     <aside className="hidden lg:flex flex-col w-[220px] bg-white border rounded-2xl m-3 p-3">
       <div className="flex items-center gap-2 px-2 py-3">
@@ -48,10 +55,22 @@ const Sidebar = () => {
           {openProp ? <FaChevronDown /> : <FaChevronRight />}
         </button>
         {openProp && (
-          <ul className="pl-3 text-sm text-gray-700 space-y-2">
-            <li className="px-2">Pending Review</li>
-            <li className="px-2">Active Listings</li>
-            <li className="px-2">Rejected Listings</li>
+          <ul className="pl-3 text-sm text-gray-700 space-y-1">
+            {propLinks.map(({ label, tab }) => (
+              <li key={tab}>
+                <button
+                  onClick={() => onTabChange(tab)}
+                  className={
+                    "w-full text-left px-2 py-1.5 rounded-md transition " +
+                    (activeTab === tab
+                      ? "bg-[#F3B03E]/40 font-semibold text-black"
+                      : "hover:bg-gray-100 text-gray-700")
+                  }
+                >
+                  {label}
+                </button>
+              </li>
+            ))}
           </ul>
         )}
       </div>
@@ -176,14 +195,11 @@ export default function AgentDashboard() {
     setError("");
 
     try {
-      // ✅ This endpoint should return only properties agent is allowed to see.
-      // If your backend supports ?status=..., we pass it.
       const status = statusKeyToEnum(statusKey);
       const data = await apiFetch(`/api/properties/dashboard?status=${status}&page=0&size=50`);
 
       const content = data?.content || [];
 
-      // ✅ safety filter (in case backend returns mixed)
       const filtered = content.filter(
         (p) => String(p.status || "").toUpperCase() === status
       );
@@ -197,12 +213,19 @@ export default function AgentDashboard() {
   }
 
   const handleLogout = () => {
-      clearAccessToken();
-      navigate("/login", { replace: true });
-    };
+    clearAccessToken();
+    navigate("/login", { replace: true });
+  };
+
+  // Single handler used by both Sidebar and Tabs
+  const handleTabChange = (newTab) => {
+    setTab(newTab);
+  };
 
   useEffect(() => {
-    loadList(tab);
+    loadList("pending");
+    loadList("approved");
+    loadList("rejected");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
@@ -210,7 +233,7 @@ export default function AgentDashboard() {
 
   return (
     <div className="min-h-screen bg-[#f7f6f3] flex">
-      <Sidebar />
+      <Sidebar activeTab={tab} onTabChange={handleTabChange} />
 
       <div className="flex-1">
         <div className="flex items-center justify-between px-6 md:px-10 lg:px-16 py-4">
@@ -247,7 +270,7 @@ export default function AgentDashboard() {
           <div className="mt-10">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl md:text-3xl font-bold">Manage Listings</h2>
-              <Tabs active={tab} counts={counts} onChange={setTab} />
+              <Tabs active={tab} counts={counts} onChange={handleTabChange} />
             </div>
 
             <div className="mt-6">

@@ -13,15 +13,19 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState(""); // for register
+  const [name, setName] = useState("");
+  const [companyName, setCompanyName] = useState(""); // for COMPANY register
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [info, setInfo] = useState(""); // success messages
+  const [info, setInfo] = useState("");
 
   const canSubmit = useMemo(() => {
-    return email.trim() && password.trim() && !loading;
-  }, [email, password, loading]);
+    if (!email.trim() || !password.trim() || loading) return false;
+    // COMPANY register requires company name
+    if (mode === "COMPANY" && authMode === "register" && !companyName.trim()) return false;
+    return true;
+  }, [email, password, loading, mode, authMode, companyName]);
 
   const switchAuthMode = (newMode) => {
     setAuthMode(newMode);
@@ -29,13 +33,19 @@ export default function Login() {
     setInfo("");
     setName("");
     setPassword("");
+    setCompanyName("");
   };
 
   const switchPortalMode = (newMode) => {
     setMode(newMode);
     setError("");
     setInfo("");
+    setAuthMode("login");
+    setCompanyName("");
   };
+
+  // ADMIN accounts cannot self-register
+  const canRegister = mode === "AGENT" || mode === "COMPANY";
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -46,11 +56,14 @@ export default function Login() {
     try {
       if (authMode === "register") {
         // ── REGISTER ──────────────────────────────────────────────
+        const body = { email, password, name, role: mode };
+        if (mode === "COMPANY") body.companyName = companyName;
+
         const res = await fetch(`${API_BASE}/api/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ email, password, name }),
+          body: JSON.stringify(body),
         });
 
         const text = await res.text();
@@ -59,16 +72,17 @@ export default function Login() {
 
         if (!res.ok) {
           throw new Error(
+            (data && data.error) ||
             (data && data.message) ||
-              (typeof data === "string" && data) ||
-              `Registration failed (${res.status})`
+            (typeof data === "string" && data) ||
+            `Registration failed (${res.status})`
           );
         }
 
-        // Switch to login and let the user sign in
         setAuthMode("login");
         setPassword("");
         setName("");
+        setCompanyName("");
         setInfo("Account created! Please log in to continue.");
         return;
       }
@@ -88,8 +102,8 @@ export default function Login() {
       if (!res.ok) {
         throw new Error(
           (data && data.message) ||
-            (typeof data === "string" && data) ||
-            `Login failed (${res.status})`
+          (typeof data === "string" && data) ||
+          `Login failed (${res.status})`
         );
       }
 
@@ -102,7 +116,6 @@ export default function Login() {
 
       setAccessToken(token);
 
-      // Fetch /me -> role
       const meRes = await fetch(`${API_BASE}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
@@ -115,21 +128,18 @@ export default function Login() {
       if (!meRes.ok) {
         throw new Error(
           (me && me.message) ||
-            (typeof me === "string" && me) ||
-            `Failed to fetch profile (${meRes.status})`
+          (typeof me === "string" && me) ||
+          `Failed to fetch profile (${meRes.status})`
         );
       }
 
       const role = String(me?.role || "").toUpperCase();
 
-      // Enforce selected portal type
       if (mode === "ADMIN" && role !== "ADMIN" && role !== "SUPER_ADMIN") {
         throw new Error(`This account is ${role || "UNKNOWN"} — not an ADMIN.`);
       }
       if (mode === "COMPANY" && role !== "COMPANY") {
-        throw new Error(
-          `This account is ${role || "UNKNOWN"} — not a COMPANY account.`
-        );
+        throw new Error(`This account is ${role || "UNKNOWN"} — not a COMPANY account.`);
       }
       if (mode === "AGENT" && role !== "AGENT") {
         throw new Error(`This account is ${role || "UNKNOWN"} — not an AGENT.`);
@@ -137,14 +147,14 @@ export default function Login() {
 
       if (role === "COMPANY" && !me?.companyId && !me?.company?.id) {
         throw new Error(
-          "This COMPANY account has no company assigned (companyId is missing)."
+          "This COMPANY account has no company assigned. Please contact support."
         );
       }
 
-      // Redirect by mode
       if (mode === "ADMIN") navigate("/admin");
       else if (mode === "COMPANY") navigate("/company");
       else navigate("/agent");
+
     } catch (err) {
       console.error(err);
       setError(err?.message || "Authentication failed");
@@ -155,6 +165,8 @@ export default function Login() {
 
   const portalLabel =
     mode === "ADMIN" ? "Admin" : mode === "COMPANY" ? "Company" : "Agent";
+
+  const inputCls = "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70";
 
   return (
     <div className="min-h-screen bg-[#f7f6f3] px-6 md:px-10 lg:px-16 py-10">
@@ -183,6 +195,7 @@ export default function Login() {
 
         {/* Auth card */}
         <div className="bg-white border rounded-2xl shadow-sm p-6 md:p-8">
+
           {/* Login / Create account tabs */}
           <div className="flex items-center bg-gray-100 rounded-full p-1 mb-6">
             <button
@@ -191,7 +204,7 @@ export default function Login() {
               className={
                 "flex-1 text-xs md:text-sm font-medium px-3 py-1.5 rounded-full transition " +
                 (authMode === "login"
-                  ? "bg-[#F3B03E]  text-gray-900"
+                  ? "bg-[#F3B03E] text-gray-900"
                   : "text-gray-500 hover:text-gray-700")
               }
             >
@@ -199,17 +212,28 @@ export default function Login() {
             </button>
             <button
               type="button"
-              onClick={() => switchAuthMode("register")}
+              onClick={() => canRegister && switchAuthMode("register")}
+              disabled={!canRegister}
+              title={!canRegister ? "Admin accounts are created by the system administrator" : undefined}
               className={
                 "flex-1 text-xs md:text-sm font-medium px-3 py-1.5 rounded-full transition " +
                 (authMode === "register"
                   ? "bg-[#F3B03E] shadow text-gray-900"
-                  : "text-gray-500 hover:text-gray-700")
+                  : canRegister
+                  ? "text-gray-500 hover:text-gray-700"
+                  : "text-gray-300 cursor-not-allowed")
               }
             >
               Create account
             </button>
           </div>
+
+          {/* Admin can't self-register notice */}
+          {!canRegister && (
+            <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl p-3 text-sm">
+              Admin accounts are created by the system administrator.
+            </div>
+          )}
 
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -220,11 +244,12 @@ export default function Login() {
             <p className="text-sm text-gray-500 mt-0.5">
               {authMode === "login"
                 ? "Enter your credentials to continue."
-                : "Fill in your details to get started."}
+                : mode === "COMPANY"
+                ? "Register your company to get started."
+                : "Fill in your details to register as an agent."}
             </p>
           </div>
 
-          {/* Messages */}
           {info && (
             <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl p-3 text-sm">
               {info}
@@ -244,10 +269,30 @@ export default function Login() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
+                  className={inputCls}
                   placeholder="Your name"
                   required
                 />
+              </div>
+            )}
+
+            {/* Company name field — only for COMPANY register */}
+            {authMode === "register" && mode === "COMPANY" && (
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Company name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className={inputCls}
+                  placeholder="e.g. Golden Nest Realty Ltd"
+                  required
+                />
+                <p className="text-[11px] text-gray-500 mt-1">
+                  A company account will be created and linked to you automatically.
+                </p>
               </div>
             )}
 
@@ -257,7 +302,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
+                className={inputCls}
                 placeholder="you@example.com"
                 autoComplete="email"
                 required
@@ -270,7 +315,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 type="password"
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
+                className={inputCls}
                 placeholder="••••••••"
                 autoComplete={authMode === "login" ? "current-password" : "new-password"}
                 required
@@ -285,15 +330,13 @@ export default function Login() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="w-full rounded-full px-5 py-2.5 font-medium bg-[#F3B03E] text-white hover:bg-black/90 transition inline-flex items-center justify-center gap-2"
+              className="w-full rounded-full px-5 py-2.5 font-medium bg-[#F3B03E] text-white hover:bg-black/90 transition inline-flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {loading && (
                 <span className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               )}
               {loading
-                ? authMode === "login"
-                  ? "Signing in…"
-                  : "Creating account…"
+                ? authMode === "login" ? "Signing in…" : "Creating account…"
                 : authMode === "login"
                 ? `Sign in to ${portalLabel} Portal`
                 : `Create ${portalLabel} account`}

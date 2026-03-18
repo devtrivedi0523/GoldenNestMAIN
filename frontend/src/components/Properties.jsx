@@ -111,7 +111,7 @@ const FeaturedProperties = () => {
                   {location && (
                     <p className="text-xs text-gray-500 mt-0.5">{location}</p>
                   )}
-                  {blurb && (
+                  {/* {blurb && (
                     <>
                       <p className="text-sm text-gray-600 mt-2 line-clamp-1">
                         {blurb}
@@ -120,7 +120,7 @@ const FeaturedProperties = () => {
                         Read More
                       </span>
                     </>
-                  )}
+                  )} */}
 
 
                   {/* Tags from metrics */}
