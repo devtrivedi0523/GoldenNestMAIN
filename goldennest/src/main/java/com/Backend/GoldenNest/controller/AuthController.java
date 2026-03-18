@@ -26,30 +26,33 @@ public class AuthController {
   public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
       String email = body.get("email");
       String password = body.get("password");
-      String name = body.get("name"); // <- coming from frontend Sell.jsx
+      String name = body.get("name");
+      String requestedRole = body.get("role"); // new
 
       if (email == null || password == null) {
           return ResponseEntity.badRequest().body(Map.of("error", "Email and password are required"));
       }
 
       if (users.existsByEmail(email)) {
-          return ResponseEntity
-                  .badRequest()
-                  .body(Map.of("error", "Email already exists"));
+          return ResponseEntity.badRequest().body(Map.of("error", "Email already exists"));
+      }
+
+      // ✅ Only allow USER or AGENT self-registration — everything else defaults to USER
+      String role = "USER";
+      if ("AGENT".equalsIgnoreCase(requestedRole)) {
+          role = "AGENT";
       }
 
       User u = new User();
       u.setEmail(email);
       u.setPassword(encoder.encode(password));
-      u.setRole("USER");
+      u.setRole(role); // was hardcoded "USER"
 
-      // ✅ store the name (if provided)
       if (name != null && !name.isBlank()) {
           u.setName(name);
       }
 
       users.save(u);
-
       return ResponseEntity.ok(Map.of("status", "ok"));
   }
 
