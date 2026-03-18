@@ -24,4 +24,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select u from User u where upper(u.role) = 'AGENT' and u.company.id = :companyId")
     List<User> findAgentsByCompanyId(@Param("companyId") Long companyId);
+    
+    @Query("SELECT u FROM User u WHERE u.role = 'AGENT' AND u.company IS NULL")
+    List<User> findAgentsWithNoCompany();
 }
