@@ -1,8 +1,14 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { RiAccountCircleFill } from 'react-icons/ri';
 import AccountMenu from "./AccountMenu";
 import { isLoggedIn } from "../auth";
+
+const navLinkClass = ({ isActive }) =>
+    "px-4 py-2 rounded-full font-medium transition-all duration-300 " +
+    (isActive
+        ? "bg-orange-200 font-bold"
+        : "hover:bg-orange-200 hover:font-bold");
 
 const Navbar = () => {
     return (
@@ -14,13 +20,13 @@ const Navbar = () => {
                     <img src="/1-2 1.png" alt="Golden Nest" />
                 </a>
 
-                {/* Center: Nav links — absolutely centered so they're always in the middle */}
-                <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 gap-6 text-black font-medium items-center">
-                    <a href="/" className="px-4 py-2 hover:bg-orange-200 hover:rounded-full hover:font-bold transition-all duration-300">Home</a>
-                    <Link to="/rent" className="px-4 py-2 hover:bg-orange-200 hover:rounded-full hover:font-bold transition-all duration-300">Rent</Link>
-                    <Link to="/buy" className="px-4 py-2 hover:bg-orange-200 hover:rounded-full hover:font-bold transition-all duration-300">Buy</Link>
-                    <Link to="/sell" className="px-4 py-2 hover:bg-orange-200 hover:rounded-full hover:font-bold transition-all duration-300">Sell</Link>
-                    <Link to="/aboutus" className="px-4 py-2 hover:bg-orange-200 hover:rounded-full hover:font-bold transition-all duration-300">About Us</Link>
+                {/* Center: Nav links */}
+                <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 gap-6 text-black items-center">
+                    <NavLink to="/" end className={navLinkClass}>Home</NavLink>
+                    <NavLink to="/rent" className={navLinkClass}>Rent</NavLink>
+                    <NavLink to="/buy" className={navLinkClass}>Buy</NavLink>
+                    <NavLink to="/sell" className={navLinkClass}>Sell</NavLink>
+                    <NavLink to="/aboutus" className={navLinkClass}>About Us</NavLink>
                 </div>
 
                 {/* Right: Contact Us + Login / Account */}
