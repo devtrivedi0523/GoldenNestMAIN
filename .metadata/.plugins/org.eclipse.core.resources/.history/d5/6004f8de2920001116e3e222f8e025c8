@@ -1,0 +1,42 @@
+package com.Backend.GoldenNest.controller;
+
+import com.Backend.GoldenNest.dto.PropertyCardDto;
+import com.Backend.GoldenNest.modal.Property;
+import com.Backend.GoldenNest.repository.PropertyRepository;
+import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.*;
+
+@RestController
+@RequestMapping("/api/admin/properties")
+public class AdminPropertyController {
+
+    private final PropertyRepository properties;
+
+    public AdminPropertyController(PropertyRepository properties) {
+        this.properties = properties;
+    }
+
+    // ... all your existing methods stay exactly the same ...
+
+    // ---- Decline reason ----
+    @PostMapping("/{id}/decline-reason")
+    public ResponseEntity<?> setDeclineReason(
+            @PathVariable Long id,
+            @RequestBody Map<String, List<String>> body) {
+
+        Property property = properties.findById(id)  // ← use 'properties', not 'PropertyRepository'
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found: " + id));
+
+        List<String> reasons = body.getOrDefault("reasons", List.of());
+        String reasonText = String.join(", ", reasons);
+        property.setDeclineReason(reasonText);
+        properties.save(property);  // ← use 'properties', not 'PropertyRepository'
+
+        return ResponseEntity.ok().build();
+    }
+}

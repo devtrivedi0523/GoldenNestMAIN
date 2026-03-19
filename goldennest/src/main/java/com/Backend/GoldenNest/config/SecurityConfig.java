@@ -52,6 +52,7 @@ public class SecurityConfig {
             	    // ----------------------------
             	    .requestMatchers(HttpMethod.POST, "/api/properties").authenticated()
             	    .requestMatchers("/api/properties/mine").authenticated()
+            	    .requestMatchers(HttpMethod.POST, "/api/upload/image").authenticated()
 
             	    // ⚠️ WARNING: admin should NOT be public in prod
             	    .requestMatchers("/api/admin/**").hasRole("ADMIN")

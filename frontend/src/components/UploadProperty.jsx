@@ -1,7 +1,8 @@
 // src/components/UploadProperty.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAccessToken } from "../auth";
+import ImageUploader from "./ImageUploader";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
 
@@ -22,7 +23,6 @@ const UploadProperty = () => {
     areaSqft: "",
     lat: "",
     lng: "",
-    imagesInput: "",
     locationTag: "",
     propertyType: "",
     yearBuilt: "",
@@ -38,6 +38,11 @@ const UploadProperty = () => {
   const [submitting, setSubmitting] = useState(false);
   const [loadingMe, setLoadingMe] = useState(true);
   const [error, setError] = useState("");
+
+
+  // Remove imagesInput from the form useState object
+  // Add this separate state:
+  const [imageUrls, setImageUrls] = useState([]);
 
   // metadata from /api/auth/me
   const [me, setMe] = useState(null);
@@ -140,10 +145,8 @@ const UploadProperty = () => {
         return;
       }
 
-      const images = (form.imagesInput || "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const images = imageUrls;
+
 
       const floorPlans = (form.floorPlansInput || "")
         .split(",")
@@ -215,15 +218,6 @@ const UploadProperty = () => {
       setSubmitting(false);
     }
   };
-
-  const imageUrls = useMemo(
-    () =>
-      (form.imagesInput || "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-    [form.imagesInput]
-  );
 
   return (
     <section className="py-10 px-6 md:px-20 bg-[#f7f6f3]">
@@ -432,26 +426,10 @@ const UploadProperty = () => {
           </div>
 
           {/* PHOTOS */}
+          {/* PHOTOS */}
           <div className="border-t border-gray-200 pt-6">
             <h2 className="text-lg font-semibold mb-3">Photos</h2>
-            <div>
-              <label className="block text-sm font-medium mb-1">Image URLs (comma separated)</label>
-              <input name="imagesInput" value={form.imagesInput} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="https://image1.jpg, https://image2.jpg" />
-              <p className="text-xs text-gray-500 mt-1">Paste one or more image URLs separated by commas. The first one will be used as the main cover image.</p>
-
-              {imageUrls.length > 0 && (
-                <div className="mt-3">
-                  <p className="text-xs font-medium text-gray-600 mb-2">Preview</p>
-                  <div className="flex flex-wrap gap-3">
-                    {imageUrls.map((url, i) => (
-                      <div key={url + i} className="w-24 h-20 rounded-lg overflow-hidden border bg-gray-100">
-                        <img src={url} alt={`preview-${i + 1}`} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.opacity = "0.4"; }} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <ImageUploader urls={imageUrls} onChange={setImageUrls} />
           </div>
 
           {/* SUBMIT */}

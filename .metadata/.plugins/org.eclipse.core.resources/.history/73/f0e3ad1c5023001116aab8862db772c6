@@ -1,0 +1,91 @@
+package com.Backend.GoldenNest.config;
+
+import com.Backend.GoldenNest.security.JwtAuthFilter;
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.*;
+
+import java.util.List;
+
+@Configuration
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    @Autowired
+    private JwtAuthFilter jwtAuthFilter;
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(csrf -> csrf.disable())
+            .cors(c -> c.configurationSource(corsSource()))
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+
+            	    // ----------------------------
+            	    // ALWAYS allow preflight
+            	    // ----------------------------
+            	    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+            	    // ----------------------------
+            	    // PUBLIC endpoints (MUST be first)
+            	    // ----------------------------
+            	    .requestMatchers(HttpMethod.GET, "/api/places/**").permitAll()
+            	    .requestMatchers(HttpMethod.GET, "/api/properties/**").permitAll()
+
+            	    .requestMatchers("/api/auth/**").permitAll()
+            	    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/error").permitAll()
+
+            	    // ----------------------------
+            	    // PROTECTED endpoints
+            	    // ----------------------------
+            	    .requestMatchers(HttpMethod.POST, "/api/properties").authenticated()
+            	    .requestMatchers("/api/properties/mine").authenticated()
+
+            	    // ⚠️ WARNING: admin should NOT be public in prod
+            	    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+            	    // ----------------------------
+            	    // Everything else
+            	    // ----------------------------
+            	    .anyRequest().authenticated()
+            	)
+
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
+        return cfg.getAuthenticationManager();
+    }
+
+    @Bean
+    CorsConfigurationSource corsSource() {
+        CorsConfiguration cfg = new CorsConfiguration();
+        cfg.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:8000", "https://golden-nest-main.vercel.app", "https://www.thegoldennest.co.uk"));
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        cfg.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", cfg);
+        return source;
+    }
+}
