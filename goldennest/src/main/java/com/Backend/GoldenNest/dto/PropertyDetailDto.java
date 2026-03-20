@@ -23,6 +23,10 @@ public class PropertyDetailDto {
     public LocalDate leaseStartDate;
     public Integer leaseTermYears;
     public LocalDate leaseExpiryDate;
+    
+    public String ownerName;
+    public String ownerEmail;
+    public String ownerPhone;
 
     public java.util.List<String> floorPlans;
     public java.util.List<String> virtualTours;

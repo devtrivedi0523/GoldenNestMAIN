@@ -182,6 +182,13 @@ public class PropertyController {
         dto.floorPlans = splitCsv(p.getFloorPlans());
         dto.virtualTours = splitCsv(p.getVirtualTours());
         dto.documents = splitCsv(p.getDocuments());
+        
+     // ✅ Include owner contact info
+        if (p.getOwner() != null) {
+            dto.ownerName  = p.getOwner().getName();
+            dto.ownerEmail = p.getOwner().getEmail();
+            dto.ownerPhone = p.getOwner().getPhone();
+        }
 
         return dto;
     }
