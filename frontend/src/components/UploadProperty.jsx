@@ -10,7 +10,7 @@ const UploadProperty = () => {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    areaId: "", // optional, will be set if user has areas
+    areaId: "",
     title: "",
     description: "",
     price: "",
@@ -38,13 +38,7 @@ const UploadProperty = () => {
   const [submitting, setSubmitting] = useState(false);
   const [loadingMe, setLoadingMe] = useState(true);
   const [error, setError] = useState("");
-
-
-  // Remove imagesInput from the form useState object
-  // Add this separate state:
   const [imageUrls, setImageUrls] = useState([]);
-
-  // metadata from /api/auth/me
   const [me, setMe] = useState(null);
 
   const token = getAccessToken();
@@ -54,7 +48,6 @@ const UploadProperty = () => {
     setForm((f) => ({ ...f, [name]: value }));
   };
 
-  // load current user (includes areas & companyId)
   useEffect(() => {
     let cancelled = false;
     async function loadMe() {
@@ -77,8 +70,6 @@ const UploadProperty = () => {
         const data = await res.json();
         if (cancelled) return;
         setMe(data || null);
-
-        // If user has exactly 1 area, preselect it
         if (data?.areas?.length === 1) {
           setForm((f) => ({ ...f, areaId: String(data.areas[0].id) }));
         }
@@ -91,9 +82,7 @@ const UploadProperty = () => {
       }
     }
     loadMe();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [token]);
 
   const role = String(me?.role || "").toUpperCase();
@@ -102,12 +91,8 @@ const UploadProperty = () => {
   const isCompany = role === "COMPANY";
   const isUser = role === "USER";
 
-  // availableAreas are the areas returned as part of `me`
   const availableAreas = Array.isArray(me?.areas) ? me.areas : [];
-
-  // If user is agent and has areas, require selection
   const agentHasAreas = isAgent && availableAreas.length > 0;
-
   const canPublishRole = isAdmin || isAgent || isCompany || isUser;
 
   const canSubmit =
@@ -119,8 +104,7 @@ const UploadProperty = () => {
     !!String(form.bedrooms || "").trim() &&
     !!String(form.bathrooms || "").trim() &&
     !!String(form.address1 || "").trim() &&
-    // if agent has areas, area must be selected
-    (!agentHasAreas || (!!String(form.areaId || "").trim()));
+    (!agentHasAreas || !!String(form.areaId || "").trim());
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -138,35 +122,18 @@ const UploadProperty = () => {
         setSubmitting(false);
         return;
       }
-      // agent must select an area if they have assigned areas
       if (agentHasAreas && !String(form.areaId || "").trim()) {
-        setError("Please select an area before publishing (assigned to your account).");
+        setError("Please select an area before publishing.");
         setSubmitting(false);
         return;
       }
 
-      const images = imageUrls;
-
-
-      const floorPlans = (form.floorPlansInput || "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      const virtualTours = (form.virtualToursInput || "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      const documents = (form.documentsInput || "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const floorPlans = (form.floorPlansInput || "").split(",").map((s) => s.trim()).filter(Boolean);
+      const virtualTours = (form.virtualToursInput || "").split(",").map((s) => s.trim()).filter(Boolean);
+      const documents = (form.documentsInput || "").split(",").map((s) => s.trim()).filter(Boolean);
 
       const payload = {
-        // send areaId when set, otherwise null
         areaId: form.areaId ? Number(form.areaId) : null,
-
         title: form.title,
         description: form.description,
         price: Number(form.price),
@@ -183,8 +150,7 @@ const UploadProperty = () => {
         propertyType: form.propertyType || "",
         yearBuilt: form.yearBuilt ? Number(form.yearBuilt) : null,
         type: form.propertyType || "",
-        images,
-
+        images: imageUrls,
         tenure: form.tenure || null,
         leaseStartDate: form.leaseStartDate || null,
         leaseTermYears: form.leaseTermYears ? Number(form.leaseTermYears) : null,
@@ -210,7 +176,43 @@ const UploadProperty = () => {
       }
 
       const data = await res.json();
-      navigate(`/sell/upload/${data.id}/advanced`);
+
+      // ✅ Fetch full property so success page has coverImageUrl
+      let preview = null;
+      try {
+        const previewRes = await fetch(`${API_BASE}/api/properties/${data.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (previewRes.ok) preview = await previewRes.json();
+      } catch { }
+
+      // ✅ Build coverImageUrl — try API images array first, then user-entered URLs
+      if (preview) {
+        if (!preview.coverImageUrl && Array.isArray(preview.images) && preview.images.length > 0) {
+          preview.coverImageUrl = preview.images[0];
+        }
+        if (!preview.coverImageUrl && imageUrls.length > 0) {
+          preview.coverImageUrl = imageUrls[0];
+        }
+      }
+
+      // ✅ Fallback: build preview from form data if API fetch failed
+      if (!preview) {
+        preview = {
+          id: data.id,
+          title: form.title,
+          description: form.description,
+          city: form.city,
+          state: form.state,
+          price: Number(form.price),
+          coverImageUrl: imageUrls[0] || null,
+        };
+      }
+
+      navigate(`/sell/upload/${data.id}/advanced`, {
+        state: { property: preview },
+      });
+
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to upload property");
@@ -227,17 +229,15 @@ const UploadProperty = () => {
           className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm space-y-6"
         >
           {error && (
-            <div className="p-3 rounded-md bg-red-50 text-red-700 text-sm">
-              {error}
-            </div>
+            <div className="p-3 rounded-md bg-red-50 text-red-700 text-sm">{error}</div>
           )}
 
-          {/* Profile + area notice */}
+          {/* Profile notice */}
           <div className="p-4 rounded-xl border bg-[#fffaf0]">
             {loadingMe ? (
               <div className="text-sm text-gray-700">Loading your profile…</div>
             ) : !token ? (
-              <div className="text-sm text-gray-700">You’re not logged in. Please log in first.</div>
+              <div className="text-sm text-gray-700">You're not logged in. Please log in first.</div>
             ) : !canPublishRole ? (
               <div className="text-sm text-gray-700">
                 Your role is <b>{me?.role || "UNKNOWN"}</b>. You cannot publish properties.
@@ -259,7 +259,7 @@ const UploadProperty = () => {
             )}
           </div>
 
-          {/* If agent has areas - show select */}
+          {/* Area selector for agents */}
           {agentHasAreas && (
             <div>
               <label className="block text-sm font-medium mb-1">
@@ -269,7 +269,7 @@ const UploadProperty = () => {
                 name="areaId"
                 value={form.areaId}
                 onChange={onChange}
-                className="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
+                className="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/70"
                 required
               >
                 <option value="">Select area…</option>
@@ -283,7 +283,7 @@ const UploadProperty = () => {
             </div>
           )}
 
-          {/* --- rest of form (same as before) --- */}
+          {/* Basic details */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold">Basic details</h2>
@@ -291,90 +291,43 @@ const UploadProperty = () => {
                 Fields marked <span className="text-red-500">*</span> are required
               </span>
             </div>
-
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  name="title"
-                  value={form.title}
-                  onChange={onChange}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                  placeholder="e.g. Bright 2BHK apartment near city center"
-                  required
-                />
+                <label className="block text-sm font-medium mb-1">Title <span className="text-red-500">*</span></label>
+                <input name="title" value={form.title} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70" placeholder="e.g. Bright 2BHK apartment near city center" required />
               </div>
-
               <div>
                 <label className="block text-sm font-medium mb-1">Description</label>
-                <textarea
-                  name="description"
-                  value={form.description}
-                  onChange={onChange}
-                  className="w-full border rounded-lg px-3 py-2 text-sm min-h-[120px] focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                  placeholder="Describe the property, layout, surroundings, and any special features."
-                />
-                <p className="text-xs text-gray-500 mt-1">Tip: Mention light, storage, nearby transport, schools, or amenities to make the listing more attractive.</p>
+                <textarea name="description" value={form.description} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm min-h-[120px] focus:outline-none focus:ring-2 focus:ring-black/70" placeholder="Describe the property, layout, surroundings, and any special features." />
+                <p className="text-xs text-gray-500 mt-1">Tip: Mention light, storage, nearby transport, schools, or amenities.</p>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Price <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">£</span>
-                    <input
-                      name="price"
-                      type="number"
-                      value={form.price}
-                      onChange={onChange}
-                      className="w-full border rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                      placeholder="e.g. 350000"
-                      required
-                    />
+                    <input name="price" type="number" value={form.price} onChange={onChange} className="w-full border rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70" placeholder="e.g. 350000" required />
                   </div>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium mb-1">Bedrooms <span className="text-red-500">*</span></label>
-                  <input
-                    name="bedrooms"
-                    type="number"
-                    min="0"
-                    value={form.bedrooms}
-                    onChange={onChange}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                    placeholder="e.g. 3"
-                    required
-                  />
+                  <input name="bedrooms" type="number" min="0" value={form.bedrooms} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70" placeholder="e.g. 3" required />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium mb-1">Bathrooms <span className="text-red-500">*</span></label>
-                  <input
-                    name="bathrooms"
-                    type="number"
-                    min="0"
-                    value={form.bathrooms}
-                    onChange={onChange}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                    placeholder="e.g. 2"
-                    required
-                  />
+                  <input name="bathrooms" type="number" min="0" value={form.bathrooms} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70" placeholder="e.g. 2" required />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* location, property details, photos, etc. (unchanged) */}
-          {/* LOCATION */}
+          {/* Location */}
           <div className="border-t border-gray-200 pt-6">
             <h2 className="text-lg font-semibold mb-3">Location</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Street address <span className="text-red-500">*</span></label>
-                <input name="address1" value={form.address1} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70" placeholder="e.g. 21 Baker Street" required />
+                <input name="address1" value={form.address1} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70" placeholder="e.g. 21 Baker Street" required />
               </div>
               <div><label className="block text-sm font-medium mb-1">City</label><input name="city" value={form.city} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="e.g. London" /></div>
               <div><label className="block text-sm font-medium mb-1">State</label><input name="state" value={form.state} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="State / Region" /></div>
@@ -382,7 +335,7 @@ const UploadProperty = () => {
             </div>
           </div>
 
-          {/* PROPERTY DETAILS */}
+          {/* Property details */}
           <div className="border-t border-gray-200 pt-6">
             <h2 className="text-lg font-semibold mb-3">Property details</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -390,7 +343,6 @@ const UploadProperty = () => {
               <div><label className="block text-sm font-medium mb-1">Latitude</label><input name="lat" type="number" value={form.lat} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Optional" /></div>
               <div><label className="block text-sm font-medium mb-1">Longitude</label><input name="lng" type="number" value={form.lng} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Optional" /></div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Location tag</label>
@@ -402,7 +354,6 @@ const UploadProperty = () => {
                   <option value="Hillside">Hillside</option>
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium mb-1">Property type</label>
                 <select name="propertyType" value={form.propertyType} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm bg-white">
@@ -411,7 +362,6 @@ const UploadProperty = () => {
                   <option value="Villa">Villa</option>
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium mb-1">Year built</label>
                 <select name="yearBuilt" value={form.yearBuilt} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm bg-white">
@@ -425,16 +375,20 @@ const UploadProperty = () => {
             </div>
           </div>
 
-          {/* PHOTOS */}
-          {/* PHOTOS */}
+          {/* Photos */}
           <div className="border-t border-gray-200 pt-6">
             <h2 className="text-lg font-semibold mb-3">Photos</h2>
             <ImageUploader urls={imageUrls} onChange={setImageUrls} />
           </div>
 
-          {/* SUBMIT */}
+          {/* Submit */}
           <div className="pt-4 flex justify-end">
-            <button type="submit" disabled={submitting || !canSubmit} className="inline-flex items-center gap-2 bg-[#F3B03E] text-white px-5 py-2.5 rounded-full text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed hover:bg-black/90 transition" title={!canSubmit ? (!token ? "Login required" : loadingMe ? "Loading profile..." : "Fill required fields") : ""}>
+            <button
+              type="submit"
+              disabled={submitting || !canSubmit}
+              className="inline-flex items-center gap-2 bg-[#F3B03E] text-white px-5 py-2.5 rounded-full text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed hover:bg-black/90 transition"
+              title={!canSubmit ? (!token ? "Login required" : loadingMe ? "Loading profile..." : "Fill required fields") : ""}
+            >
               {submitting && <span className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
               {submitting ? "Uploading…" : "Publish listing"}
             </button>

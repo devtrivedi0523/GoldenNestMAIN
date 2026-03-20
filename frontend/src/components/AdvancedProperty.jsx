@@ -6,10 +6,10 @@ import { getAccessToken } from "../auth";
 const API_BASE = import.meta.env.VITE_API_URL || "https://api.thegoldennest.co.uk";
 
 export default function AdvancedProperty() {
-    const { id } = useParams();                    // <-- /sell/upload/:id/advanced
+    const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const basicProperty = location.state?.property; // optional preview from step 1
+    const basicProperty = location.state?.property;
 
     const [form, setForm] = useState({
         tenure: "",
@@ -44,23 +44,12 @@ export default function AdvancedProperty() {
 
             const payload = {
                 tenure: form.tenure || null,
-                leaseStartDate: form.leaseStartDate || null, // "YYYY-MM-DD"
-                leaseTermYears: form.leaseTermYears
-                    ? Number(form.leaseTermYears)
-                    : null,
+                leaseStartDate: form.leaseStartDate || null,
+                leaseTermYears: form.leaseTermYears ? Number(form.leaseTermYears) : null,
                 leaseExpiryDate: form.leaseExpiryDate || null,
-                floorPlans: form.floorPlansInput
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                virtualTours: form.virtualToursInput
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                documents: form.documentsInput
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
+                floorPlans: form.floorPlansInput.split(",").map((s) => s.trim()).filter(Boolean),
+                virtualTours: form.virtualToursInput.split(",").map((s) => s.trim()).filter(Boolean),
+                documents: form.documentsInput.split(",").map((s) => s.trim()).filter(Boolean),
             };
 
             const res = await fetch(`${API_BASE}/api/properties/${id}/advanced`, {
@@ -77,13 +66,35 @@ export default function AdvancedProperty() {
                 throw new Error(`Update failed (${res.status}): ${txt}`);
             }
 
-            // after advanced step, you can either:
-            // 1) go to success page
+            // ✅ Fetch the full property to get images for the success page preview
+            let preview = basicProperty ?? null;
+            try {
+                const previewRes = await fetch(`${API_BASE}/api/properties/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (previewRes.ok) {
+                    const full = await previewRes.json();
+                    // images array contains strings (URLs)
+                    const firstImage =
+                        Array.isArray(full.images) && full.images.length > 0
+                            ? full.images[0]
+                            : null;
+                    preview = {
+                        ...full,
+                        // ✅ build coverImageUrl from images array or fall back to basicProperty
+                        coverImageUrl:
+                            full.coverImageUrl ||
+                            firstImage ||
+                            basicProperty?.coverImageUrl ||
+                            null,
+                    };
+                }
+            } catch { }
+
             navigate("/sell/success", {
-                state: { property: basicProperty ?? { id: Number(id) } },
+                state: { property: preview ?? { id: Number(id) } },
             });
-            // or 2) go straight to details page:
-            // navigate(`/buy/properties/${id}`);
+
         } catch (err) {
             console.error(err);
             setError(err.message || "Failed to update advanced details");
@@ -117,129 +128,53 @@ export default function AdvancedProperty() {
                         <h2 className="text-sm font-semibold mb-3">Lease & tenure</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-medium mb-1">
-                                    Tenure
-                                </label>
-                                <select
-                                    name="tenure"
-                                    value={form.tenure}
-                                    onChange={onChange}
-                                    className="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                                >
+                                <label className="block text-xs font-medium mb-1">Tenure</label>
+                                <select name="tenure" value={form.tenure} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/70">
                                     <option value="">Not specified</option>
                                     <option value="Freehold">Freehold</option>
                                     <option value="Leasehold">Leasehold</option>
                                 </select>
                             </div>
-
                             <div>
-                                <label className="block text-xs font-medium mb-1">
-                                    Lease term (years)
-                                </label>
-                                <input
-                                    name="leaseTermYears"
-                                    type="number"
-                                    min="0"
-                                    value={form.leaseTermYears}
-                                    onChange={onChange}
-                                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                                    placeholder="e.g. 99"
-                                />
+                                <label className="block text-xs font-medium mb-1">Lease term (years)</label>
+                                <input name="leaseTermYears" type="number" min="0" value={form.leaseTermYears} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70" placeholder="e.g. 99" />
                             </div>
-
                             <div>
-                                <label className="block text-xs font-medium mb-1">
-                                    Lease start date
-                                </label>
-                                <input
-                                    name="leaseStartDate"
-                                    type="date"
-                                    value={form.leaseStartDate}
-                                    onChange={onChange}
-                                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                                />
+                                <label className="block text-xs font-medium mb-1">Lease start date</label>
+                                <input name="leaseStartDate" type="date" value={form.leaseStartDate} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70" />
                             </div>
-
                             <div>
-                                <label className="block text-xs font-medium mb-1">
-                                    Lease expiry date
-                                </label>
-                                <input
-                                    name="leaseExpiryDate"
-                                    type="date"
-                                    value={form.leaseExpiryDate}
-                                    onChange={onChange}
-                                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                                />
+                                <label className="block text-xs font-medium mb-1">Lease expiry date</label>
+                                <input name="leaseExpiryDate" type="date" value={form.leaseExpiryDate} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70" />
                             </div>
                         </div>
                     </div>
 
-                    {/* MEDIA FIELDS */}
+                    {/* MEDIA */}
                     <div className="border-t border-gray-200 pt-4">
-                        <h2 className="text-sm font-semibold mb-3">
-                            Additional media (optional)
-                        </h2>
-
+                        <h2 className="text-sm font-semibold mb-3">Additional media (optional)</h2>
                         <div className="space-y-3">
                             <div>
-                                <label className="block text-xs font-medium mb-1">
-                                    Floor plan image URLs (comma separated)
-                                </label>
-                                <input
-                                    name="floorPlansInput"
-                                    value={form.floorPlansInput}
-                                    onChange={onChange}
-                                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                                    placeholder="https://example.com/floor1.jpg, https://example.com/floor2.jpg"
-                                />
+                                <label className="block text-xs font-medium mb-1">Floor plan image URLs (comma separated)</label>
+                                <input name="floorPlansInput" value={form.floorPlansInput} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70" placeholder="https://example.com/floor1.jpg, ..." />
                             </div>
-
                             <div>
-                                <label className="block text-xs font-medium mb-1">
-                                    Virtual tour links (comma separated)
-                                </label>
-                                <input
-                                    name="virtualToursInput"
-                                    value={form.virtualToursInput}
-                                    onChange={onChange}
-                                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                                    placeholder="https://youtube.com/..., https://matterport.com/..."
-                                />
+                                <label className="block text-xs font-medium mb-1">Virtual tour links (comma separated)</label>
+                                <input name="virtualToursInput" value={form.virtualToursInput} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70" placeholder="https://youtube.com/..., ..." />
                             </div>
-
                             <div>
-                                <label className="block text-xs font-medium mb-1">
-                                    Document URLs (comma separated)
-                                </label>
-                                <input
-                                    name="documentsInput"
-                                    value={form.documentsInput}
-                                    onChange={onChange}
-                                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70 focus:border-black/70"
-                                    placeholder="Brochures, PDFs, etc."
-                                />
+                                <label className="block text-xs font-medium mb-1">Document URLs (comma separated)</label>
+                                <input name="documentsInput" value={form.documentsInput} onChange={onChange} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70" placeholder="Brochures, PDFs, etc." />
                             </div>
                         </div>
                     </div>
 
                     <div className="pt-4 flex justify-between">
-                        <button
-                            type="button"
-                            onClick={() => navigate(-1)}
-                            className="text-sm text-gray-600 underline"
-                        >
+                        <button type="button" onClick={() => navigate(-1)} className="text-sm text-gray-600 underline">
                             Back
                         </button>
-
-                        <button
-                            type="submit"
-                            disabled={submitting}
-                            className="inline-flex items-center gap-2 bg-[#F3B03E] text-white px-5 py-2.5 rounded-full text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed hover:bg-black/90 transition"
-                        >
-                            {submitting && (
-                                <span className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                            )}
+                        <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 bg-[#F3B03E] text-white px-5 py-2.5 rounded-full text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed hover:bg-black/90 transition">
+                            {submitting && <span className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
                             {submitting ? "Saving…" : "Save & continue"}
                         </button>
                     </div>
