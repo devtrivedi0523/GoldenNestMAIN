@@ -17,14 +17,23 @@ const SigninPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
-  // If already logged in, redirect home
   useEffect(() => {
     if (isLoggedIn()) navigate("/", { replace: true });
   }, []);
+
+  const switchMode = (newMode) => {
+    setMode(newMode);
+    setError("");
+    setInfo("");
+    setName("");
+    setPhone("");
+    setPassword("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,7 +50,7 @@ const SigninPage = () => {
       const body =
         mode === "login"
           ? { email, password }
-          : { email, password, name };
+          : { email, password, name, phone };
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -52,9 +61,9 @@ const SigninPage = () => {
 
       if (!res.ok) {
         const txt = await res.text();
-        throw new Error(
-          `Failed to ${mode === "login" ? "log in" : "register"} (${res.status}): ${txt}`
-        );
+        let msg = txt;
+        try { msg = JSON.parse(txt)?.error || JSON.parse(txt)?.message || txt; } catch { }
+        throw new Error(msg || `Failed to ${mode === "login" ? "log in" : "register"} (${res.status})`);
       }
 
       let data = {};
@@ -65,9 +74,7 @@ const SigninPage = () => {
         if (token) setAccessToken(token);
         navigate("/", { replace: true });
       } else {
-        setMode("login");
-        setPassword("");
-        setName("");
+        switchMode("login");
         setInfo("Account created! Please log in to continue.");
       }
     } catch (err) {
@@ -77,6 +84,8 @@ const SigninPage = () => {
       setLoading(false);
     }
   };
+
+  const inputCls = "w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f7f6f3] to-[#e9e4d9] flex items-center justify-center px-4 py-10">
@@ -120,20 +129,20 @@ const SigninPage = () => {
           <div className="flex items-center bg-gray-100 rounded-full p-1 mb-6">
             <button
               type="button"
-              onClick={() => { setMode("login"); setError(""); setInfo(""); }}
+              onClick={() => switchMode("login")}
               className={
                 "flex-1 text-xs md:text-sm font-medium px-3 py-1.5 rounded-full transition " +
-                (mode === "login" ? "bg-[#F3B03E] shadow text-gray-900" : "text-gray-500")
+                (mode === "login" ? "bg-[#F3B03E] shadow text-gray-900" : "text-gray-500 hover:text-gray-700")
               }
             >
               Log in
             </button>
             <button
               type="button"
-              onClick={() => { setMode("register"); setError(""); setInfo(""); }}
+              onClick={() => switchMode("register")}
               className={
                 "flex-1 text-xs md:text-sm font-medium px-3 py-1.5 rounded-full transition " +
-                (mode === "register" ? "bg-[#F3B03E] shadow text-gray-900" : "text-gray-500")
+                (mode === "register" ? "bg-[#F3B03E] shadow text-gray-900" : "text-gray-500 hover:text-gray-700")
               }
             >
               Create account
@@ -155,24 +164,43 @@ const SigninPage = () => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "register" && (
-              <div>
-                <label className="block text-xs md:text-sm font-medium mb-1">Full name</label>
-                <input
-                  type="text"
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
-                  required
-                />
-              </div>
+              <>
+                <div>
+                  <label className="block text-xs md:text-sm font-medium mb-1">Full name</label>
+                  <input
+                    type="text"
+                    className={inputCls}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs md:text-sm font-medium mb-1">
+                    Phone number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    className={inputCls}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+44 7700 900000"
+                    required
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Used so buyers can contact you directly about your listings.
+                  </p>
+                </div>
+              </>
             )}
 
             <div>
               <label className="block text-xs md:text-sm font-medium mb-1">Email</label>
               <input
                 type="email"
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70"
+                className={inputCls}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -184,7 +212,7 @@ const SigninPage = () => {
               <label className="block text-xs md:text-sm font-medium mb-1">Password</label>
               <input
                 type="password"
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/70"
+                className={inputCls}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

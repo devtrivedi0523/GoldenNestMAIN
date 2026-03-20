@@ -15,6 +15,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [companyName, setCompanyName] = useState(""); // for COMPANY register
+  const [phone, setPhone] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,8 +25,10 @@ export default function Login() {
     if (!email.trim() || !password.trim() || loading) return false;
     // COMPANY register requires company name
     if (mode === "COMPANY" && authMode === "register" && !companyName.trim()) return false;
+    // phone required on register
+    if (authMode === "register" && !phone.trim()) return false;
     return true;
-  }, [email, password, loading, mode, authMode, companyName]);
+  }, [email, password, loading, mode, authMode, companyName, phone]);
 
   const switchAuthMode = (newMode) => {
     setAuthMode(newMode);
@@ -34,6 +37,7 @@ export default function Login() {
     setName("");
     setPassword("");
     setCompanyName("");
+    setPhone("");
   };
 
   const switchPortalMode = (newMode) => {
@@ -56,7 +60,7 @@ export default function Login() {
     try {
       if (authMode === "register") {
         // ── REGISTER ──────────────────────────────────────────────
-        const body = { email, password, name, role: mode };
+        const body = { email, password, name, role: mode, phone };
         if (mode === "COMPANY") body.companyName = companyName;
 
         const res = await fetch(`${API_BASE}/api/auth/register`, {
@@ -83,6 +87,7 @@ export default function Login() {
         setPassword("");
         setName("");
         setCompanyName("");
+        setPhone("");
         setInfo("Account created! Please log in to continue.");
         return;
       }
@@ -220,8 +225,8 @@ export default function Login() {
                 (authMode === "register"
                   ? "bg-[#F3B03E] shadow text-gray-900"
                   : canRegister
-                  ? "text-gray-500 hover:text-gray-700"
-                  : "text-gray-300 cursor-not-allowed")
+                    ? "text-gray-500 hover:text-gray-700"
+                    : "text-gray-300 cursor-not-allowed")
               }
             >
               Create account
@@ -245,8 +250,8 @@ export default function Login() {
               {authMode === "login"
                 ? "Enter your credentials to continue."
                 : mode === "COMPANY"
-                ? "Register your company to get started."
-                : "Fill in your details to register as an agent."}
+                  ? "Register your company to get started."
+                  : "Fill in your details to register as an agent."}
             </p>
           </div>
 
@@ -273,6 +278,26 @@ export default function Login() {
                   placeholder="Your name"
                   required
                 />
+              </div>
+            )}
+
+            {/* Phone number — required on all registrations */}
+            {authMode === "register" && (
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Phone number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className={inputCls}
+                  placeholder="+44 7700 900000"
+                  required
+                />
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Used so buyers can contact you directly about your listings.
+                </p>
               </div>
             )}
 
@@ -338,8 +363,8 @@ export default function Login() {
               {loading
                 ? authMode === "login" ? "Signing in…" : "Creating account…"
                 : authMode === "login"
-                ? `Sign in to ${portalLabel} Portal`
-                : `Create ${portalLabel} account`}
+                  ? `Sign in to ${portalLabel} Portal`
+                  : `Create ${portalLabel} account`}
             </button>
 
             {authMode === "register" && (

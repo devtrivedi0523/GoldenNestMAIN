@@ -130,6 +130,11 @@ export default function PropertyDetails() {
         ? `https://www.google.com/maps/embed/v1/streetview?key=${MAPS_KEY}&location=${property.lat},${property.lng}&heading=210&pitch=10&fov=80`
         : null;
 
+    // ✅ Owner contact info from API
+    const ownerPhone = property.ownerPhone || null;
+    const ownerEmail = property.ownerEmail || null;
+    const ownerName = property.ownerName || null;
+
     return (
         <div className="min-h-screen bg-white">
             {/* Header */}
@@ -190,11 +195,11 @@ export default function PropertyDetails() {
                 </div>
             </div>
 
-            {/* Main content: two-column layout with sticky sidebar */}
+            {/* Main content */}
             <div className="px-6 md:px-10 lg:px-20 mt-6 mb-16">
                 <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-                    {/* LEFT: Tabs + Details (scrollable) */}
+                    {/* LEFT: Tabs + Details */}
                     <div className="flex-1 min-w-0">
                         <div className="border border-gray-200 rounded-lg bg-white">
                             {/* Tabs row */}
@@ -233,26 +238,20 @@ export default function PropertyDetails() {
                                         {keyFeatures.length > 0 ? (
                                             <div className="flex flex-wrap gap-4 mb-6">
                                                 {keyFeatures.map((f, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3"
-                                                    >
+                                                    <div key={idx} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
                                                         {f.icon}
                                                         <span className="text-sm font-medium text-gray-800">{f.label}</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <p className="mb-6 text-sm text-gray-600">
-                                                Key features will appear here when added for this property.
-                                            </p>
+                                            <p className="mb-6 text-sm text-gray-600">Key features will appear here when added for this property.</p>
                                         )}
 
                                         <h3 className="text-lg font-semibold mb-2">Description</h3>
                                         <hr className="border-gray-200 mb-3" />
                                         <p className="leading-relaxed whitespace-pre-line mb-8">
-                                            {property.description ||
-                                                "No detailed description has been provided for this property yet."}
+                                            {property.description || "No detailed description has been provided for this property yet."}
                                         </p>
 
                                         <h3 className="text-lg font-semibold mb-2">Further Details</h3>
@@ -260,13 +259,7 @@ export default function PropertyDetails() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-12 mb-8 text-sm">
                                             <div className="flex">
                                                 <span className="font-semibold w-36">Property Type:</span>
-                                                <span>
-                                                    {property.type
-                                                        ? `${property.type}${property.bedrooms != null && property.bathrooms != null
-                                                            ? ` (${property.bedrooms} bedroom, ${property.bathrooms} bathroom)`
-                                                            : ""}`
-                                                        : "Not specified"}
-                                                </span>
+                                                <span>{property.type ? `${property.type}${property.bedrooms != null && property.bathrooms != null ? ` (${property.bedrooms} bedroom, ${property.bathrooms} bathroom)` : ""}` : "Not specified"}</span>
                                             </div>
                                             <div className="flex">
                                                 <span className="font-semibold w-36">Tenure:</span>
@@ -274,11 +267,7 @@ export default function PropertyDetails() {
                                             </div>
                                             <div className="flex">
                                                 <span className="font-semibold w-36">Floor Space:</span>
-                                                <span>
-                                                    {property.areaSqft != null
-                                                        ? `${property.areaSqft.toLocaleString()} square feet`
-                                                        : "Not specified"}
-                                                </span>
+                                                <span>{property.areaSqft != null ? `${property.areaSqft.toLocaleString()} square feet` : "Not specified"}</span>
                                             </div>
                                             <div className="flex">
                                                 <span className="font-semibold w-36">Location:</span>
@@ -316,9 +305,7 @@ export default function PropertyDetails() {
                                             <ul className="list-disc pl-5 space-y-1">
                                                 {floorPlans.map((url, i) => (
                                                     <li key={url + i}>
-                                                        <a href={url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">
-                                                            Floor plan {i + 1}
-                                                        </a>
+                                                        <a href={url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">Floor plan {i + 1}</a>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -335,9 +322,7 @@ export default function PropertyDetails() {
                                             <ul className="list-disc pl-5 space-y-1">
                                                 {virtualTours.map((url, i) => (
                                                     <li key={url + i}>
-                                                        <a href={url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">
-                                                            Virtual tour {i + 1}
-                                                        </a>
+                                                        <a href={url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">Virtual tour {i + 1}</a>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -354,9 +339,7 @@ export default function PropertyDetails() {
                                             <ul className="list-disc pl-5 space-y-1">
                                                 {documents.map((url, i) => (
                                                     <li key={url + i}>
-                                                        <a href={url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">
-                                                            Document {i + 1}
-                                                        </a>
+                                                        <a href={url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">Document {i + 1}</a>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -374,43 +357,21 @@ export default function PropertyDetails() {
                                         ) : (
                                             <>
                                                 <div className="w-full h-[320px] md:h-[420px] border rounded-xl overflow-hidden shadow-sm">
-                                                    <iframe
-                                                        title="Property location map"
-                                                        width="100%"
-                                                        height="100%"
-                                                        style={{ border: 0 }}
-                                                        loading="lazy"
-                                                        allowFullScreen
-                                                        referrerPolicy="no-referrer-when-downgrade"
-                                                        src={mapSrc}
-                                                    />
+                                                    <iframe title="Property location map" width="100%" height="100%" style={{ border: 0 }} loading="lazy" allowFullScreen referrerPolicy="no-referrer-when-downgrade" src={mapSrc} />
                                                 </div>
                                                 {streetViewSrc && (
                                                     <>
                                                         <p className="font-medium mt-4">Street View</p>
                                                         <div className="w-full h-[260px] border rounded-xl overflow-hidden shadow-sm">
-                                                            <iframe
-                                                                title="Property street view"
-                                                                width="100%"
-                                                                height="100%"
-                                                                style={{ border: 0 }}
-                                                                loading="lazy"
-                                                                allowFullScreen
-                                                                referrerPolicy="no-referrer-when-downgrade"
-                                                                src={streetViewSrc}
-                                                            />
+                                                            <iframe title="Property street view" width="100%" height="100%" style={{ border: 0 }} loading="lazy" allowFullScreen referrerPolicy="no-referrer-when-downgrade" src={streetViewSrc} />
                                                         </div>
                                                     </>
                                                 )}
                                                 <p className="text-xs text-gray-600">
-                                                    {hasCoords
-                                                        ? "Location is shown based on latitude/longitude stored for this property."
-                                                        : "Exact coordinates are not stored for this property yet, so the map shows an approximate location based on the address."}
+                                                    {hasCoords ? "Location is shown based on latitude/longitude stored for this property." : "Exact coordinates are not stored for this property yet, so the map shows an approximate location based on the address."}
                                                 </p>
                                                 {fullAddress && (
-                                                    <p className="text-xs text-gray-600">
-                                                        Address used: <span className="font-medium">{fullAddress}</span>
-                                                    </p>
+                                                    <p className="text-xs text-gray-600">Address used: <span className="font-medium">{fullAddress}</span></p>
                                                 )}
                                             </>
                                         )}
@@ -419,7 +380,6 @@ export default function PropertyDetails() {
                             </div>
                         </div>
 
-                        {/* Back link */}
                         <div className="mt-6">
                             <button onClick={() => navigate(-1)} className="underline text-gray-700 text-sm">
                                 Back to property listings
@@ -431,30 +391,27 @@ export default function PropertyDetails() {
                     <div className="lg:w-72 xl:w-80 flex-shrink-0 self-start sticky top-6">
                         <div className="sticky top-6">
                             <div className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
-
-
-
-                                {/* Agent info */}
                                 <div className="px-4 py-4">
-                                    {/* Logo / branding */}
+                                    {/* Branding */}
                                     <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-gray-100">
                                         <div>
                                             <p className="text-gray-500 text-xs tracking-wide">Marketed by</p>
                                             <p className="text-sm font-semibold text-gray-800">The Golden Nest</p>
-                                            {property.title && (
-                                                <p className="text-sm text-gray-500 leading-tight">{property.title}</p>
-                                            )}
-                                            {locationLine && (
-                                                <p className="text-xs text-gray-500">{locationLine}</p>
-                                            )}
+                                            {property.title && <p className="text-sm text-gray-500 leading-tight">{property.title}</p>}
+                                            {locationLine && <p className="text-xs text-gray-500">{locationLine}</p>}
                                         </div>
-
-                                        <img
-                                            src="/1-2 1.png"
-                                            alt="The Golden Nest"
-                                            className="w-16 h-16 object-contain flex-shrink-0"
-                                        />
+                                        <img src="/1-2 1.png" alt="The Golden Nest" className="w-16 h-16 object-contain flex-shrink-0" />
                                     </div>
+
+                                    {/* Owner info — shown if available */}
+                                    {(ownerName || ownerEmail) && (
+                                        <div className="mb-4 pb-3 border-b border-gray-100">
+                                            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Listed by</p>
+                                            {ownerName && <p className="text-sm font-semibold text-gray-800">{ownerName}</p>}
+                                            {ownerEmail && <p className="text-xs text-gray-500">{ownerEmail}</p>}
+                                            {ownerPhone && <p className="text-xs text-gray-600 font-medium mt-0.5">{ownerPhone}</p>}
+                                        </div>
+                                    )}
 
                                     {/* Price */}
                                     {formattedPrice && (
@@ -466,12 +423,13 @@ export default function PropertyDetails() {
 
                                     {/* CTA Buttons */}
                                     <div className="space-y-2">
+                                        {/* ✅ Use owner's phone if available, fallback to default */}
                                         <a
-                                            href="tel:+441234567890"
+                                            href={`tel:${ownerPhone || "+441234567890"}`}
                                             className="flex items-center justify-center gap-2 w-full bg-[#F3B03E] hover:bg-[#e0a030] text-white font-semibold text-sm py-2.5 px-4 rounded-lg transition-colors"
                                         >
                                             <FaPhone className="h-3.5 w-3.5" />
-                                            Call Agent
+                                            {ownerPhone ? ownerPhone : "Call Agent"}
                                         </a>
                                         <button
                                             type="button"
@@ -483,7 +441,6 @@ export default function PropertyDetails() {
                                         </button>
                                     </div>
 
-                                    {/* Small print */}
                                     <p className="text-[11px] text-gray-400 mt-3 text-center">
                                         Response usually within 24 hours
                                     </p>
